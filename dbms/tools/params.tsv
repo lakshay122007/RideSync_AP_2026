@@ -1,0 +1,41 @@
+# id|setup statement run first (- for none)|parameters passed to the query
+R1|-|:'email'
+R2|-|:uid
+R3|-|
+R4|-|:zone
+R5|-|NULL, NULL, false
+R6|-|:ev
+R7|-|:ev
+R8|-|:ev, :zone
+R9|-|:pend_ride
+R10|-|:pend_ride
+R11|-|:pend_ride, :pend_driver
+R12|-|:uid
+R13|-|:rider, NULL
+R14|-|:done_ride, :done_driver
+R15|-|:done_ride, :done_rider
+R16|-|:rated
+R17|-|:rated
+R18|-|:uid
+R19|-|:uid
+R20|-|:uid
+W1|-|'Timing User', 'timing.user@ridesync.test', 'seed-hash'
+W2|-|'Timing Event', '2027-01-01 10:00', 'Venue 1', 'gym', false, :uid
+W3|-|:ev, 'Renamed Event', '2027-01-01 10:00', 'Venue 1', 'gym', false, :ev_owner
+W4|-|:ev_busy, :ev_busy_owner
+W5|-|:ev, :uid, :zone, :'ev_dep', 3, true, 200
+W6|-|:pend_ride, :pend_driver
+W7|UPDATE rides SET status = 'cancelled' WHERE id = :pend_ride;|:pend_ride, 'Ride cancelled by the driver'
+W8|UPDATE rides SET status = 'open' WHERE id = :done_ride;|:done_ride, :done_driver
+W9|-|:w9_ride, 1
+W10|-|:pend_req, :pend_driver
+W11|-|:pend_req, :pend_driver
+W12|-|:pend_ride
+W13|-|:appr_req, :appr_rider
+W14|-|:appr_ride
+W15|-|:uid, 'Timing test notification'
+W16|-|:notif, :uid
+W17|-|:uid
+W18|-|:done_ride, :done_rider, :done_driver, 5, 'Great ride'
+W19|UPDATE rides SET departure_time = NOW() + INTERVAL '30 minutes', reminder_sent = FALSE WHERE id IN (SELECT id FROM rides WHERE status = 'open' ORDER BY id LIMIT 200);|
+W20|-|
