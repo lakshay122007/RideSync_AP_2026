@@ -1,0 +1,45 @@
+-- R19 | READ | Unread notification count (bell badge, polled)
+-- Parameters: :uid
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT COUNT(*) AS unread
+-- FROM notifications
+-- WHERE user_id = $1
+--   AND is_read = FALSE;
+-- 
+-- 
+
+-- Run 1
+Aggregate  (cost=4.49..4.50 rows=1 width=8) (actual time=0.072..0.072 rows=1.00 loops=1)
+  Buffers: shared hit=4
+  ->  Index Only Scan using idx_notif_user_read on notifications  (cost=0.42..4.48 rows=3 width=0) (actual time=0.067..0.068 rows=3.00 loops=1)
+        Index Cond: ((user_id = 1) AND (is_read = false))
+        Heap Fetches: 0
+        Index Searches: 1
+        Buffers: shared hit=4
+Planning Time: 0.036 ms
+Execution Time: 0.082 ms
+
+-- Run 2
+Aggregate  (cost=4.49..4.50 rows=1 width=8) (actual time=0.042..0.042 rows=1.00 loops=1)
+  Buffers: shared hit=4
+  ->  Index Only Scan using idx_notif_user_read on notifications  (cost=0.42..4.48 rows=3 width=0) (actual time=0.040..0.040 rows=3.00 loops=1)
+        Index Cond: ((user_id = 1) AND (is_read = false))
+        Heap Fetches: 0
+        Index Searches: 1
+        Buffers: shared hit=4
+Planning Time: 0.030 ms
+Execution Time: 0.049 ms
+
+-- Run 3
+Aggregate  (cost=4.49..4.50 rows=1 width=8) (actual time=0.044..0.044 rows=1.00 loops=1)
+  Buffers: shared hit=4
+  ->  Index Only Scan using idx_notif_user_read on notifications  (cost=0.42..4.48 rows=3 width=0) (actual time=0.042..0.042 rows=3.00 loops=1)
+        Index Cond: ((user_id = 1) AND (is_read = false))
+        Heap Fetches: 0
+        Index Searches: 1
+        Buffers: shared hit=4
+Planning Time: 0.029 ms
+Execution Time: 0.050 ms
+

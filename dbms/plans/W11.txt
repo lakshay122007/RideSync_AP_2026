@@ -1,0 +1,76 @@
+-- W11 | WRITE | Approve a pending request (driver of that ride only)
+-- Parameters: :pend_req, :pend_driver
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- UPDATE ride_requests rq
+-- SET status = 'approved'
+-- FROM rides r
+-- WHERE rq.id = $1
+--   AND r.id = rq.ride_id
+--   AND r.driver_id = $2
+--   AND rq.status = 'pending'
+-- RETURNING rq.ride_id, rq.rider_id;
+-- 
+-- 
+
+-- Run 1
+Update on ride_requests rq  (cost=0.71..20.76 rows=1 width=50) (actual time=0.179..0.181 rows=1.00 loops=1)
+  Buffers: shared hit=33
+  ->  Nested Loop  (cost=0.71..20.76 rows=1 width=50) (actual time=0.011..0.012 rows=1.00 loops=1)
+        Buffers: shared hit=9
+        ->  Index Scan using ride_requests_pkey on ride_requests rq  (cost=0.42..8.44 rows=1 width=10) (actual time=0.009..0.009 rows=1.00 loops=1)
+              Index Cond: (id = 60010)
+              Filter: ((status)::text = 'pending'::text)
+              Index Searches: 1
+              Buffers: shared hit=6
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=10) (actual time=0.002..0.002 rows=1.00 loops=1)
+              Index Cond: (id = rq.ride_id)
+              Filter: (driver_id = 311)
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=17
+Planning Time: 0.118 ms
+Execution Time: 0.283 ms
+
+-- Run 2
+Update on ride_requests rq  (cost=0.71..20.76 rows=1 width=50) (actual time=0.147..0.148 rows=1.00 loops=1)
+  Buffers: shared hit=33
+  ->  Nested Loop  (cost=0.71..20.76 rows=1 width=50) (actual time=0.008..0.009 rows=1.00 loops=1)
+        Buffers: shared hit=9
+        ->  Index Scan using ride_requests_pkey on ride_requests rq  (cost=0.42..8.44 rows=1 width=10) (actual time=0.005..0.006 rows=1.00 loops=1)
+              Index Cond: (id = 60010)
+              Filter: ((status)::text = 'pending'::text)
+              Index Searches: 1
+              Buffers: shared hit=6
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=10) (actual time=0.002..0.002 rows=1.00 loops=1)
+              Index Cond: (id = rq.ride_id)
+              Filter: (driver_id = 311)
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=17
+Planning Time: 0.107 ms
+Execution Time: 0.229 ms
+
+-- Run 3
+Update on ride_requests rq  (cost=0.71..20.76 rows=1 width=50) (actual time=0.204..0.206 rows=1.00 loops=1)
+  Buffers: shared hit=33
+  ->  Nested Loop  (cost=0.71..20.76 rows=1 width=50) (actual time=0.009..0.010 rows=1.00 loops=1)
+        Buffers: shared hit=9
+        ->  Index Scan using ride_requests_pkey on ride_requests rq  (cost=0.42..8.44 rows=1 width=10) (actual time=0.006..0.007 rows=1.00 loops=1)
+              Index Cond: (id = 60010)
+              Filter: ((status)::text = 'pending'::text)
+              Index Searches: 1
+              Buffers: shared hit=6
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=10) (actual time=0.002..0.002 rows=1.00 loops=1)
+              Index Cond: (id = rq.ride_id)
+              Filter: (driver_id = 311)
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=17
+Planning Time: 0.117 ms
+Execution Time: 0.291 ms
+

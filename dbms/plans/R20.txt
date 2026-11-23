@@ -1,0 +1,172 @@
+-- R20 | READ | Dashboard summary counts for the logged-in user
+-- Parameters: :uid
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT (SELECT COUNT(*) FROM rides WHERE driver_id = $1) AS rides_offered,
+--        (SELECT COUNT(*) FROM ride_requests WHERE rider_id = $1) AS requests_made,
+--        (SELECT COUNT(*)
+--         FROM ride_requests rq
+--         JOIN rides r ON r.id = rq.ride_id
+--         WHERE r.driver_id = $1
+--           AND rq.status = 'pending'
+--           AND r.status IN ('open', 'full')) AS pending_to_review,
+--        (SELECT COUNT(*) FROM notifications
+--         WHERE user_id = $1 AND is_read = FALSE) AS unread_notifications;
+-- 
+-- 
+-- 
+
+-- Run 1
+Result  (cost=45.24..45.25 rows=1 width=32) (actual time=0.094..0.095 rows=1.00 loops=1)
+  Buffers: shared hit=15
+  InitPlan 1
+    ->  Aggregate  (cost=4.35..4.36 rows=1 width=8) (actual time=0.006..0.006 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_rides_driver on rides  (cost=0.29..4.34 rows=3 width=0) (actual time=0.003..0.003 rows=3.00 loops=1)
+                Index Cond: (driver_id = 1)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  InitPlan 2
+    ->  Aggregate  (cost=4.47..4.48 rows=1 width=8) (actual time=0.006..0.006 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_requests_rider on ride_requests  (cost=0.29..4.45 rows=9 width=0) (actual time=0.005..0.005 rows=9.00 loops=1)
+                Index Cond: (rider_id = 1)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  InitPlan 3
+    ->  Aggregate  (cost=31.89..31.90 rows=1 width=8) (actual time=0.014..0.014 rows=1.00 loops=1)
+          Buffers: shared hit=5
+          ->  Nested Loop  (cost=4.73..31.89 rows=1 width=0) (actual time=0.014..0.014 rows=0.00 loops=1)
+                Buffers: shared hit=5
+                ->  Bitmap Heap Scan on rides r  (cost=4.31..15.92 rows=1 width=4) (actual time=0.014..0.014 rows=0.00 loops=1)
+                      Recheck Cond: (driver_id = 1)
+                      Filter: ((status)::text = ANY ('{open,full}'::text[]))
+                      Rows Removed by Filter: 3
+                      Heap Blocks: exact=3
+                      Buffers: shared hit=5
+                      ->  Bitmap Index Scan on idx_rides_driver  (cost=0.00..4.31 rows=3 width=0) (actual time=0.002..0.002 rows=3.00 loops=1)
+                            Index Cond: (driver_id = 1)
+                            Index Searches: 1
+                            Buffers: shared hit=2
+                ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=1 width=4) (never executed)
+                      Index Cond: (ride_id = r.id)
+                      Filter: ((status)::text = 'pending'::text)
+                      Index Searches: 0
+  InitPlan 4
+    ->  Aggregate  (cost=4.49..4.50 rows=1 width=8) (actual time=0.066..0.066 rows=1.00 loops=1)
+          Buffers: shared hit=4
+          ->  Index Only Scan using idx_notif_user_read on notifications  (cost=0.42..4.48 rows=3 width=0) (actual time=0.065..0.065 rows=3.00 loops=1)
+                Index Cond: ((user_id = 1) AND (is_read = false))
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.214 ms
+Execution Time: 0.126 ms
+
+-- Run 2
+Result  (cost=45.24..45.25 rows=1 width=32) (actual time=0.074..0.075 rows=1.00 loops=1)
+  Buffers: shared hit=15
+  InitPlan 1
+    ->  Aggregate  (cost=4.35..4.36 rows=1 width=8) (actual time=0.004..0.005 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_rides_driver on rides  (cost=0.29..4.34 rows=3 width=0) (actual time=0.002..0.003 rows=3.00 loops=1)
+                Index Cond: (driver_id = 1)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  InitPlan 2
+    ->  Aggregate  (cost=4.47..4.48 rows=1 width=8) (actual time=0.005..0.005 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_requests_rider on ride_requests  (cost=0.29..4.45 rows=9 width=0) (actual time=0.004..0.004 rows=9.00 loops=1)
+                Index Cond: (rider_id = 1)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  InitPlan 3
+    ->  Aggregate  (cost=31.89..31.90 rows=1 width=8) (actual time=0.012..0.012 rows=1.00 loops=1)
+          Buffers: shared hit=5
+          ->  Nested Loop  (cost=4.73..31.89 rows=1 width=0) (actual time=0.012..0.012 rows=0.00 loops=1)
+                Buffers: shared hit=5
+                ->  Bitmap Heap Scan on rides r  (cost=4.31..15.92 rows=1 width=4) (actual time=0.012..0.012 rows=0.00 loops=1)
+                      Recheck Cond: (driver_id = 1)
+                      Filter: ((status)::text = ANY ('{open,full}'::text[]))
+                      Rows Removed by Filter: 3
+                      Heap Blocks: exact=3
+                      Buffers: shared hit=5
+                      ->  Bitmap Index Scan on idx_rides_driver  (cost=0.00..4.31 rows=3 width=0) (actual time=0.002..0.002 rows=3.00 loops=1)
+                            Index Cond: (driver_id = 1)
+                            Index Searches: 1
+                            Buffers: shared hit=2
+                ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=1 width=4) (never executed)
+                      Index Cond: (ride_id = r.id)
+                      Filter: ((status)::text = 'pending'::text)
+                      Index Searches: 0
+  InitPlan 4
+    ->  Aggregate  (cost=4.49..4.50 rows=1 width=8) (actual time=0.051..0.051 rows=1.00 loops=1)
+          Buffers: shared hit=4
+          ->  Index Only Scan using idx_notif_user_read on notifications  (cost=0.42..4.48 rows=3 width=0) (actual time=0.049..0.050 rows=3.00 loops=1)
+                Index Cond: ((user_id = 1) AND (is_read = false))
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.193 ms
+Execution Time: 0.103 ms
+
+-- Run 3
+Result  (cost=45.24..45.25 rows=1 width=32) (actual time=0.081..0.082 rows=1.00 loops=1)
+  Buffers: shared hit=15
+  InitPlan 1
+    ->  Aggregate  (cost=4.35..4.36 rows=1 width=8) (actual time=0.004..0.004 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_rides_driver on rides  (cost=0.29..4.34 rows=3 width=0) (actual time=0.002..0.003 rows=3.00 loops=1)
+                Index Cond: (driver_id = 1)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  InitPlan 2
+    ->  Aggregate  (cost=4.47..4.48 rows=1 width=8) (actual time=0.006..0.006 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_requests_rider on ride_requests  (cost=0.29..4.45 rows=9 width=0) (actual time=0.005..0.005 rows=9.00 loops=1)
+                Index Cond: (rider_id = 1)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  InitPlan 3
+    ->  Aggregate  (cost=31.89..31.90 rows=1 width=8) (actual time=0.012..0.013 rows=1.00 loops=1)
+          Buffers: shared hit=5
+          ->  Nested Loop  (cost=4.73..31.89 rows=1 width=0) (actual time=0.012..0.012 rows=0.00 loops=1)
+                Buffers: shared hit=5
+                ->  Bitmap Heap Scan on rides r  (cost=4.31..15.92 rows=1 width=4) (actual time=0.012..0.012 rows=0.00 loops=1)
+                      Recheck Cond: (driver_id = 1)
+                      Filter: ((status)::text = ANY ('{open,full}'::text[]))
+                      Rows Removed by Filter: 3
+                      Heap Blocks: exact=3
+                      Buffers: shared hit=5
+                      ->  Bitmap Index Scan on idx_rides_driver  (cost=0.00..4.31 rows=3 width=0) (actual time=0.002..0.002 rows=3.00 loops=1)
+                            Index Cond: (driver_id = 1)
+                            Index Searches: 1
+                            Buffers: shared hit=2
+                ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=1 width=4) (never executed)
+                      Index Cond: (ride_id = r.id)
+                      Filter: ((status)::text = 'pending'::text)
+                      Index Searches: 0
+  InitPlan 4
+    ->  Aggregate  (cost=4.49..4.50 rows=1 width=8) (actual time=0.057..0.057 rows=1.00 loops=1)
+          Buffers: shared hit=4
+          ->  Index Only Scan using idx_notif_user_read on notifications  (cost=0.42..4.48 rows=3 width=0) (actual time=0.056..0.056 rows=3.00 loops=1)
+                Index Cond: ((user_id = 1) AND (is_read = false))
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.192 ms
+Execution Time: 0.114 ms
+

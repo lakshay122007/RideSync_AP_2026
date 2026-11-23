@@ -1,0 +1,41 @@
+-- W2 | WRITE | Create an event
+-- Parameters: 'Timing Event', '2027-01-01 10:00', 'Venue 1', 'gym', false, :uid
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- INSERT INTO events (name, event_date, location, category, is_recurring, created_by)
+-- VALUES ($1, $2, $3, $4, $5, $6)
+-- RETURNING id;
+-- 
+-- 
+
+-- Run 1
+Insert on events  (cost=0.00..0.01 rows=1 width=815) (actual time=0.140..0.140 rows=1.00 loops=1)
+  Buffers: shared hit=21
+  ->  Result  (cost=0.00..0.01 rows=1 width=815) (actual time=0.032..0.032 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.032 ms
+Trigger for constraint events_parent_event_id_fkey: time=0.018 calls=1
+Trigger for constraint events_created_by_fkey: time=0.274 calls=1
+Execution Time: 0.444 ms
+
+-- Run 2
+Insert on events  (cost=0.00..0.01 rows=1 width=815) (actual time=0.152..0.153 rows=1.00 loops=1)
+  Buffers: shared hit=20
+  ->  Result  (cost=0.00..0.01 rows=1 width=815) (actual time=0.040..0.040 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.035 ms
+Trigger for constraint events_parent_event_id_fkey: time=0.021 calls=1
+Trigger for constraint events_created_by_fkey: time=0.265 calls=1
+Execution Time: 0.453 ms
+
+-- Run 3
+Insert on events  (cost=0.00..0.01 rows=1 width=815) (actual time=0.256..0.257 rows=1.00 loops=1)
+  Buffers: shared hit=20
+  ->  Result  (cost=0.00..0.01 rows=1 width=815) (actual time=0.037..0.038 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.033 ms
+Trigger for constraint events_parent_event_id_fkey: time=0.029 calls=1
+Trigger for constraint events_created_by_fkey: time=0.313 calls=1
+Execution Time: 0.614 ms
+

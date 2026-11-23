@@ -1,0 +1,200 @@
+-- R8 | READ | Rides for an event, same zone first, then adjacent zones, then the rest
+-- Parameters: :ev, :zone
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT r.id, r.departure_time, r.total_seats, r.seats_available, r.status,
+--        r.cost_split, r.total_cost,
+--        z.id AS zone_id, z.name AS zone_name,
+--        u.id AS driver_id, u.name AS driver_name, u.avg_rating,
+--        CASE
+--          WHEN r.zone_id = $2        THEN 0
+--          WHEN za.zone_id IS NOT NULL THEN 1
+--          ELSE 2
+--        END AS zone_rank,
+--        CASE WHEN r.cost_split
+--             THEN ROUND(r.total_cost / (COALESCE(a.approved_count, 0) + 1), 2)
+--        END AS cost_share
+-- FROM rides r
+-- JOIN zones z ON z.id = r.zone_id
+-- JOIN users u ON u.id = r.driver_id
+-- LEFT JOIN zone_adjacency za
+--        ON za.zone_id = $2 AND za.adjacent_zone_id = r.zone_id
+-- LEFT JOIN (SELECT ride_id, COUNT(*) AS approved_count
+--            FROM ride_requests
+--            WHERE status = 'approved'
+--            GROUP BY ride_id) a ON a.ride_id = r.id
+-- WHERE r.event_id = $1
+--   AND r.status IN ('open', 'full')
+-- ORDER BY zone_rank, r.departure_time;
+-- 
+-- 
+
+-- Run 1
+Sort  (cost=5574.94..5574.96 rows=10 width=105) (actual time=34.136..34.139 rows=30.00 loops=1)
+  Sort Key: (CASE WHEN (r.zone_id = 1) THEN 0 WHEN (za.zone_id IS NOT NULL) THEN 1 ELSE 2 END), r.departure_time
+  Sort Method: quicksort  Memory: 28kB
+  Buffers: shared hit=1451
+  ->  Nested Loop  (cost=4220.25..5574.77 rows=10 width=105) (actual time=26.444..34.118 rows=30.00 loops=1)
+        Buffers: shared hit=1448
+        ->  Hash Join  (cost=4219.96..5491.60 rows=10 width=70) (actual time=26.430..34.008 rows=30.00 loops=1)
+              Hash Cond: (r.zone_id = z.id)
+              Buffers: shared hit=1358
+              ->  Hash Left Join  (cost=4218.83..5490.41 rows=10 width=54) (actual time=26.419..33.990 rows=30.00 loops=1)
+                    Hash Cond: (r.zone_id = za.adjacent_zone_id)
+                    Buffers: shared hit=1357
+                    ->  Hash Right Join  (cost=4217.63..5489.16 rows=10 width=50) (actual time=26.402..33.965 rows=30.00 loops=1)
+                          Hash Cond: (ride_requests.ride_id = r.id)
+                          Buffers: shared hit=1356
+                          ->  HashAggregate  (cost=4119.78..4681.78 rows=56200 width=12) (actual time=26.225..31.271 rows=57990.00 loops=1)
+                                Group Key: ride_requests.ride_id
+                                Batches: 1  Memory Usage: 4377kB
+                                Buffers: shared hit=1324
+                                ->  Seq Scan on ride_requests  (cost=0.00..3573.93 rows=109172 width=4) (actual time=0.002..12.052 rows=108894.00 loops=1)
+                                      Filter: ((status)::text = 'approved'::text)
+                                      Rows Removed by Filter: 71100
+                                      Buffers: shared hit=1324
+                          ->  Hash  (cost=97.72..97.72 rows=10 width=42) (actual time=0.079..0.080 rows=30.00 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                                Buffers: shared hit=32
+                                ->  Bitmap Heap Scan on rides r  (cost=60.20..97.72 rows=10 width=42) (actual time=0.017..0.073 rows=30.00 loops=1)
+                                      Recheck Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full}'::text[])))
+                                      Heap Blocks: exact=30
+                                      Buffers: shared hit=32
+                                      ->  Bitmap Index Scan on idx_rides_event_zone  (cost=0.00..60.20 rows=10 width=0) (actual time=0.009..0.009 rows=30.00 loops=1)
+                                            Index Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full}'::text[])))
+                                            Index Searches: 1
+                                            Buffers: shared hit=2
+                    ->  Hash  (cost=1.18..1.18 rows=2 width=8) (actual time=0.009..0.009 rows=2.00 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          Buffers: shared hit=1
+                          ->  Seq Scan on zone_adjacency za  (cost=0.00..1.18 rows=2 width=8) (actual time=0.007..0.008 rows=2.00 loops=1)
+                                Filter: (zone_id = 1)
+                                Rows Removed by Filter: 12
+                                Buffers: shared hit=1
+              ->  Hash  (cost=1.06..1.06 rows=6 width=16) (actual time=0.004..0.004 rows=6.00 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.002..0.003 rows=6.00 loops=1)
+                          Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.003..0.003 rows=1.00 loops=30)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 30
+              Buffers: shared hit=90
+Planning:
+  Buffers: shared hit=130
+Planning Time: 1.012 ms
+Execution Time: 34.192 ms
+
+-- Run 2
+Sort  (cost=5574.94..5574.96 rows=10 width=105) (actual time=40.864..40.872 rows=30.00 loops=1)
+  Sort Key: (CASE WHEN (r.zone_id = 1) THEN 0 WHEN (za.zone_id IS NOT NULL) THEN 1 ELSE 2 END), r.departure_time
+  Sort Method: quicksort  Memory: 28kB
+  Buffers: shared hit=1451
+  ->  Nested Loop  (cost=4220.25..5574.77 rows=10 width=105) (actual time=31.946..40.832 rows=30.00 loops=1)
+        Buffers: shared hit=1448
+        ->  Hash Join  (cost=4219.96..5491.60 rows=10 width=70) (actual time=31.908..40.633 rows=30.00 loops=1)
+              Hash Cond: (r.zone_id = z.id)
+              Buffers: shared hit=1358
+              ->  Hash Left Join  (cost=4218.83..5490.41 rows=10 width=54) (actual time=31.886..40.601 rows=30.00 loops=1)
+                    Hash Cond: (r.zone_id = za.adjacent_zone_id)
+                    Buffers: shared hit=1357
+                    ->  Hash Right Join  (cost=4217.63..5489.16 rows=10 width=50) (actual time=31.823..40.529 rows=30.00 loops=1)
+                          Hash Cond: (ride_requests.ride_id = r.id)
+                          Buffers: shared hit=1356
+                          ->  HashAggregate  (cost=4119.78..4681.78 rows=56200 width=12) (actual time=31.548..37.703 rows=57990.00 loops=1)
+                                Group Key: ride_requests.ride_id
+                                Batches: 1  Memory Usage: 4377kB
+                                Buffers: shared hit=1324
+                                ->  Seq Scan on ride_requests  (cost=0.00..3573.93 rows=109172 width=4) (actual time=0.004..13.388 rows=108894.00 loops=1)
+                                      Filter: ((status)::text = 'approved'::text)
+                                      Rows Removed by Filter: 71100
+                                      Buffers: shared hit=1324
+                          ->  Hash  (cost=97.72..97.72 rows=10 width=42) (actual time=0.132..0.132 rows=30.00 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                                Buffers: shared hit=32
+                                ->  Bitmap Heap Scan on rides r  (cost=60.20..97.72 rows=10 width=42) (actual time=0.035..0.124 rows=30.00 loops=1)
+                                      Recheck Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full}'::text[])))
+                                      Heap Blocks: exact=30
+                                      Buffers: shared hit=32
+                                      ->  Bitmap Index Scan on idx_rides_event_zone  (cost=0.00..60.20 rows=10 width=0) (actual time=0.022..0.022 rows=30.00 loops=1)
+                                            Index Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full}'::text[])))
+                                            Index Searches: 1
+                                            Buffers: shared hit=2
+                    ->  Hash  (cost=1.18..1.18 rows=2 width=8) (actual time=0.035..0.036 rows=2.00 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          Buffers: shared hit=1
+                          ->  Seq Scan on zone_adjacency za  (cost=0.00..1.18 rows=2 width=8) (actual time=0.029..0.030 rows=2.00 loops=1)
+                                Filter: (zone_id = 1)
+                                Rows Removed by Filter: 12
+                                Buffers: shared hit=1
+              ->  Hash  (cost=1.06..1.06 rows=6 width=16) (actual time=0.010..0.010 rows=6.00 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.007..0.007 rows=6.00 loops=1)
+                          Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.004..0.004 rows=1.00 loops=30)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 30
+              Buffers: shared hit=90
+Planning:
+  Buffers: shared hit=130
+Planning Time: 1.361 ms
+Execution Time: 41.004 ms
+
+-- Run 3
+Sort  (cost=5574.94..5574.96 rows=10 width=105) (actual time=39.295..39.303 rows=30.00 loops=1)
+  Sort Key: (CASE WHEN (r.zone_id = 1) THEN 0 WHEN (za.zone_id IS NOT NULL) THEN 1 ELSE 2 END), r.departure_time
+  Sort Method: quicksort  Memory: 28kB
+  Buffers: shared hit=1451
+  ->  Nested Loop  (cost=4220.25..5574.77 rows=10 width=105) (actual time=30.819..39.267 rows=30.00 loops=1)
+        Buffers: shared hit=1448
+        ->  Hash Join  (cost=4219.96..5491.60 rows=10 width=70) (actual time=30.765..39.071 rows=30.00 loops=1)
+              Hash Cond: (r.zone_id = z.id)
+              Buffers: shared hit=1358
+              ->  Hash Left Join  (cost=4218.83..5490.41 rows=10 width=54) (actual time=30.748..39.046 rows=30.00 loops=1)
+                    Hash Cond: (r.zone_id = za.adjacent_zone_id)
+                    Buffers: shared hit=1357
+                    ->  Hash Right Join  (cost=4217.63..5489.16 rows=10 width=50) (actual time=30.637..38.926 rows=30.00 loops=1)
+                          Hash Cond: (ride_requests.ride_id = r.id)
+                          Buffers: shared hit=1356
+                          ->  HashAggregate  (cost=4119.78..4681.78 rows=56200 width=12) (actual time=30.376..36.140 rows=57990.00 loops=1)
+                                Group Key: ride_requests.ride_id
+                                Batches: 1  Memory Usage: 4377kB
+                                Buffers: shared hit=1324
+                                ->  Seq Scan on ride_requests  (cost=0.00..3573.93 rows=109172 width=4) (actual time=0.003..13.378 rows=108894.00 loops=1)
+                                      Filter: ((status)::text = 'approved'::text)
+                                      Rows Removed by Filter: 71100
+                                      Buffers: shared hit=1324
+                          ->  Hash  (cost=97.72..97.72 rows=10 width=42) (actual time=0.129..0.129 rows=30.00 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                                Buffers: shared hit=32
+                                ->  Bitmap Heap Scan on rides r  (cost=60.20..97.72 rows=10 width=42) (actual time=0.030..0.122 rows=30.00 loops=1)
+                                      Recheck Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full}'::text[])))
+                                      Heap Blocks: exact=30
+                                      Buffers: shared hit=32
+                                      ->  Bitmap Index Scan on idx_rides_event_zone  (cost=0.00..60.20 rows=10 width=0) (actual time=0.019..0.019 rows=30.00 loops=1)
+                                            Index Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full}'::text[])))
+                                            Index Searches: 1
+                                            Buffers: shared hit=2
+                    ->  Hash  (cost=1.18..1.18 rows=2 width=8) (actual time=0.063..0.063 rows=2.00 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          Buffers: shared hit=1
+                          ->  Seq Scan on zone_adjacency za  (cost=0.00..1.18 rows=2 width=8) (actual time=0.044..0.045 rows=2.00 loops=1)
+                                Filter: (zone_id = 1)
+                                Rows Removed by Filter: 12
+                                Buffers: shared hit=1
+              ->  Hash  (cost=1.06..1.06 rows=6 width=16) (actual time=0.007..0.008 rows=6.00 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.004..0.005 rows=6.00 loops=1)
+                          Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.005..0.005 rows=1.00 loops=30)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 30
+              Buffers: shared hit=90
+Planning:
+  Buffers: shared hit=130
+Planning Time: 1.151 ms
+Execution Time: 39.408 ms
+

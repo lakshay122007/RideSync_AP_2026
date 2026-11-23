@@ -1,0 +1,96 @@
+-- R5 | READ | List events with open ride count and open seats, with filters
+-- Parameters: NULL, NULL, false
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT e.id, e.name, e.event_date, e.location, e.category, e.is_recurring,
+--        COUNT(r.id)                       AS ride_count,
+--        COALESCE(SUM(r.seats_available), 0) AS open_seats
+-- FROM events e
+-- LEFT JOIN rides r ON r.event_id = e.id AND r.status IN ('open', 'full')
+-- WHERE ($1::text IS NULL OR e.category = $1)
+--   AND ($2::text IS NULL OR e.name ILIKE '%' || $2 || '%')
+--   AND (NOT $3::boolean OR e.event_date >= NOW())
+-- GROUP BY e.id
+-- ORDER BY e.event_date;
+-- 
+-- 
+
+-- Run 1
+Sort  (cost=2438.94..2443.94 rows=2000 width=54) (actual time=15.191..15.273 rows=2000.00 loops=1)
+  Sort Key: e.event_date
+  Sort Method: quicksort  Memory: 198kB
+  Buffers: shared hit=1320
+  ->  HashAggregate  (cost=2309.29..2329.29 rows=2000 width=54) (actual time=14.547..14.811 rows=2000.00 loops=1)
+        Group Key: e.id
+        Batches: 1  Memory Usage: 345kB
+        Buffers: shared hit=1317
+        ->  Hash Right Join  (cost=65.00..2163.23 rows=19474 width=46) (actual time=0.667..11.918 rows=20821.00 loops=1)
+              Hash Cond: (r.event_id = e.id)
+              Buffers: shared hit=1317
+              ->  Seq Scan on rides r  (cost=0.00..2047.00 rows=19474 width=12) (actual time=0.238..7.901 rows=19470.00 loops=1)
+                    Filter: ((status)::text = ANY ('{open,full}'::text[]))
+                    Rows Removed by Filter: 40530
+                    Buffers: shared hit=1297
+              ->  Hash  (cost=40.00..40.00 rows=2000 width=38) (actual time=0.426..0.427 rows=2000.00 loops=1)
+                    Buckets: 2048  Batches: 1  Memory Usage: 159kB
+                    Buffers: shared hit=20
+                    ->  Seq Scan on events e  (cost=0.00..40.00 rows=2000 width=38) (actual time=0.003..0.168 rows=2000.00 loops=1)
+                          Buffers: shared hit=20
+Planning:
+  Buffers: shared hit=30
+Planning Time: 0.146 ms
+Execution Time: 15.368 ms
+
+-- Run 2
+Sort  (cost=2438.94..2443.94 rows=2000 width=54) (actual time=15.888..15.958 rows=2000.00 loops=1)
+  Sort Key: e.event_date
+  Sort Method: quicksort  Memory: 198kB
+  Buffers: shared hit=1320
+  ->  HashAggregate  (cost=2309.29..2329.29 rows=2000 width=54) (actual time=15.245..15.497 rows=2000.00 loops=1)
+        Group Key: e.id
+        Batches: 1  Memory Usage: 345kB
+        Buffers: shared hit=1317
+        ->  Hash Right Join  (cost=65.00..2163.23 rows=19474 width=46) (actual time=0.735..12.563 rows=20821.00 loops=1)
+              Hash Cond: (r.event_id = e.id)
+              Buffers: shared hit=1317
+              ->  Seq Scan on rides r  (cost=0.00..2047.00 rows=19474 width=12) (actual time=0.291..8.585 rows=19470.00 loops=1)
+                    Filter: ((status)::text = ANY ('{open,full}'::text[]))
+                    Rows Removed by Filter: 40530
+                    Buffers: shared hit=1297
+              ->  Hash  (cost=40.00..40.00 rows=2000 width=38) (actual time=0.441..0.441 rows=2000.00 loops=1)
+                    Buckets: 2048  Batches: 1  Memory Usage: 159kB
+                    Buffers: shared hit=20
+                    ->  Seq Scan on events e  (cost=0.00..40.00 rows=2000 width=38) (actual time=0.004..0.192 rows=2000.00 loops=1)
+                          Buffers: shared hit=20
+Planning:
+  Buffers: shared hit=30
+Planning Time: 0.169 ms
+Execution Time: 16.054 ms
+
+-- Run 3
+Sort  (cost=2438.94..2443.94 rows=2000 width=54) (actual time=14.960..15.030 rows=2000.00 loops=1)
+  Sort Key: e.event_date
+  Sort Method: quicksort  Memory: 198kB
+  Buffers: shared hit=1320
+  ->  HashAggregate  (cost=2309.29..2329.29 rows=2000 width=54) (actual time=14.335..14.582 rows=2000.00 loops=1)
+        Group Key: e.id
+        Batches: 1  Memory Usage: 345kB
+        Buffers: shared hit=1317
+        ->  Hash Right Join  (cost=65.00..2163.23 rows=19474 width=46) (actual time=0.656..11.708 rows=20821.00 loops=1)
+              Hash Cond: (r.event_id = e.id)
+              Buffers: shared hit=1317
+              ->  Seq Scan on rides r  (cost=0.00..2047.00 rows=19474 width=12) (actual time=0.221..7.818 rows=19470.00 loops=1)
+                    Filter: ((status)::text = ANY ('{open,full}'::text[]))
+                    Rows Removed by Filter: 40530
+                    Buffers: shared hit=1297
+              ->  Hash  (cost=40.00..40.00 rows=2000 width=38) (actual time=0.433..0.433 rows=2000.00 loops=1)
+                    Buckets: 2048  Batches: 1  Memory Usage: 159kB
+                    Buffers: shared hit=20
+                    ->  Seq Scan on events e  (cost=0.00..40.00 rows=2000 width=38) (actual time=0.004..0.176 rows=2000.00 loops=1)
+                          Buffers: shared hit=20
+Planning:
+  Buffers: shared hit=30
+Planning Time: 0.150 ms
+Execution Time: 15.120 ms
+

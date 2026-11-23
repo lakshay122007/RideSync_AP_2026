@@ -1,0 +1,62 @@
+-- W9 | WRITE | Request a seat (ride must be open)
+-- Parameters: :w9_ride, 1
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- INSERT INTO ride_requests (ride_id, rider_id)
+-- SELECT r.id, $2
+-- FROM rides r
+-- WHERE r.id = $1
+--   AND r.status = 'open'
+-- RETURNING id;
+-- 
+-- 
+
+-- Run 1
+Insert on ride_requests  (cost=0.29..8.32 rows=1 width=58) (actual time=1.234..1.235 rows=1.00 loops=1)
+  Buffers: shared hit=45
+  ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.32 rows=1 width=58) (actual time=0.035..0.036 rows=1.00 loops=1)
+        Index Cond: (id = 10)
+        Filter: ((status)::text = 'open'::text)
+        Index Searches: 1
+        Buffers: shared hit=15
+Planning:
+  Buffers: shared hit=6
+Planning Time: 0.069 ms
+Trigger for constraint ride_requests_ride_id_fkey: time=0.086 calls=1
+Trigger for constraint ride_requests_rider_id_fkey: time=0.193 calls=1
+Trigger requests_not_own_ride: time=0.123 calls=1
+Execution Time: 1.525 ms
+
+-- Run 2
+Insert on ride_requests  (cost=0.29..8.32 rows=1 width=58) (actual time=1.428..1.429 rows=1.00 loops=1)
+  Buffers: shared hit=45
+  ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.32 rows=1 width=58) (actual time=0.037..0.038 rows=1.00 loops=1)
+        Index Cond: (id = 10)
+        Filter: ((status)::text = 'open'::text)
+        Index Searches: 1
+        Buffers: shared hit=15
+Planning:
+  Buffers: shared hit=6
+Planning Time: 0.064 ms
+Trigger for constraint ride_requests_ride_id_fkey: time=0.096 calls=1
+Trigger for constraint ride_requests_rider_id_fkey: time=0.267 calls=1
+Trigger requests_not_own_ride: time=0.178 calls=1
+Execution Time: 1.804 ms
+
+-- Run 3
+Insert on ride_requests  (cost=0.29..8.32 rows=1 width=58) (actual time=1.296..1.297 rows=1.00 loops=1)
+  Buffers: shared hit=45
+  ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.32 rows=1 width=58) (actual time=0.040..0.041 rows=1.00 loops=1)
+        Index Cond: (id = 10)
+        Filter: ((status)::text = 'open'::text)
+        Index Searches: 1
+        Buffers: shared hit=15
+Planning:
+  Buffers: shared hit=6
+Planning Time: 0.067 ms
+Trigger for constraint ride_requests_ride_id_fkey: time=0.097 calls=1
+Trigger for constraint ride_requests_rider_id_fkey: time=0.204 calls=1
+Trigger requests_not_own_ride: time=0.137 calls=1
+Execution Time: 1.610 ms
+

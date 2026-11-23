@@ -1,0 +1,211 @@
+-- R13 | READ | My seat requests with ride, event, driver and my cost share
+-- Parameters: :rider, NULL
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT rq.id AS request_id, rq.status AS request_status, rq.created_at,
+--        r.id AS ride_id, r.departure_time, r.status AS ride_status, r.cost_split,
+--        e.id AS event_id, e.name AS event_name, e.event_date,
+--        z.name AS zone_name,
+--        d.id AS driver_id, d.name AS driver_name, d.avg_rating,
+--        CASE WHEN r.cost_split
+--             THEN ROUND(r.total_cost / (COALESCE(a.approved_count, 0) + 1), 2)
+--        END AS your_share
+-- FROM ride_requests rq
+-- JOIN rides  r ON r.id = rq.ride_id
+-- JOIN events e ON e.id = r.event_id
+-- JOIN zones  z ON z.id = r.zone_id
+-- JOIN users  d ON d.id = r.driver_id
+-- LEFT JOIN (SELECT ride_id, COUNT(*) AS approved_count
+--            FROM ride_requests
+--            WHERE status = 'approved'
+--            GROUP BY ride_id) a ON a.ride_id = r.id
+-- WHERE rq.rider_id = $1
+--   AND ($2::text IS NULL OR rq.status = $2)
+-- ORDER BY e.event_date;
+-- 
+-- 
+
+-- Run 1
+Sort  (cost=5574.83..5574.85 rows=9 width=126) (actual time=34.691..34.693 rows=9.00 loops=1)
+  Sort Key: e.event_date
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=1431
+  ->  Nested Loop  (cost=4233.62..5574.69 rows=9 width=126) (actual time=27.445..34.672 rows=9.00 loops=1)
+        Buffers: shared hit=1428
+        ->  Nested Loop  (cost=4233.34..5571.55 rows=9 width=92) (actual time=27.431..34.623 rows=9.00 loops=1)
+              Buffers: shared hit=1401
+              ->  Nested Loop  (cost=4233.19..5570.42 rows=9 width=84) (actual time=27.418..34.600 rows=9.00 loops=1)
+                    Buffers: shared hit=1389
+                    ->  Hash Right Join  (cost=4232.92..5567.75 rows=9 width=66) (actual time=27.404..34.569 rows=9.00 loops=1)
+                          Hash Cond: (ride_requests.ride_id = r.id)
+                          Buffers: shared hit=1362
+                          ->  HashAggregate  (cost=4119.78..4681.78 rows=56200 width=12) (actual time=26.916..31.868 rows=57990.00 loops=1)
+                                Group Key: ride_requests.ride_id
+                                Batches: 1  Memory Usage: 4377kB
+                                Buffers: shared hit=1324
+                                ->  Seq Scan on ride_requests  (cost=0.00..3573.93 rows=109172 width=4) (actual time=0.003..11.957 rows=108894.00 loops=1)
+                                      Filter: ((status)::text = 'approved'::text)
+                                      Rows Removed by Filter: 71100
+                                      Buffers: shared hit=1324
+                          ->  Hash  (cost=113.02..113.02 rows=9 width=58) (actual time=0.103..0.103 rows=9.00 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=38
+                                ->  Nested Loop  (cost=4.65..113.02 rows=9 width=58) (actual time=0.022..0.099 rows=9.00 loops=1)
+                                      Buffers: shared hit=38
+                                      ->  Bitmap Heap Scan on ride_requests rq  (cost=4.36..38.25 rows=9 width=24) (actual time=0.013..0.021 rows=9.00 loops=1)
+                                            Recheck Cond: (rider_id = 1)
+                                            Heap Blocks: exact=9
+                                            Buffers: shared hit=11
+                                            ->  Bitmap Index Scan on idx_requests_rider  (cost=0.00..4.36 rows=9 width=0) (actual time=0.005..0.005 rows=9.00 loops=1)
+                                                  Index Cond: (rider_id = 1)
+                                                  Index Searches: 1
+                                                  Buffers: shared hit=2
+                                      ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=38) (actual time=0.008..0.008 rows=1.00 loops=9)
+                                            Index Cond: (id = rq.ride_id)
+                                            Index Searches: 9
+                                            Buffers: shared hit=27
+                    ->  Index Scan using events_pkey on events e  (cost=0.28..0.30 rows=1 width=22) (actual time=0.002..0.002 rows=1.00 loops=9)
+                          Index Cond: (id = r.event_id)
+                          Index Searches: 9
+                          Buffers: shared hit=27
+              ->  Memoize  (cost=0.14..0.16 rows=1 width=16) (actual time=0.002..0.002 rows=1.00 loops=9)
+                    Cache Key: r.zone_id
+                    Cache Mode: logical
+                    Hits: 3  Misses: 6  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=12
+                    ->  Index Scan using zones_pkey on zones z  (cost=0.13..0.15 rows=1 width=16) (actual time=0.002..0.002 rows=1.00 loops=6)
+                          Index Cond: (id = r.zone_id)
+                          Index Searches: 6
+                          Buffers: shared hit=12
+        ->  Index Scan using users_pkey on users d  (cost=0.29..0.34 rows=1 width=19) (actual time=0.004..0.004 rows=1.00 loops=9)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 9
+              Buffers: shared hit=27
+Planning:
+  Buffers: shared hit=131
+Planning Time: 1.460 ms
+Execution Time: 34.768 ms
+
+-- Run 2
+Sort  (cost=5574.83..5574.85 rows=9 width=126) (actual time=36.915..36.918 rows=9.00 loops=1)
+  Sort Key: e.event_date
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=1431
+  ->  Nested Loop  (cost=4233.62..5574.69 rows=9 width=126) (actual time=28.474..36.895 rows=9.00 loops=1)
+        Buffers: shared hit=1428
+        ->  Nested Loop  (cost=4233.34..5571.55 rows=9 width=92) (actual time=28.451..36.815 rows=9.00 loops=1)
+              Buffers: shared hit=1401
+              ->  Nested Loop  (cost=4233.19..5570.42 rows=9 width=84) (actual time=28.436..36.784 rows=9.00 loops=1)
+                    Buffers: shared hit=1389
+                    ->  Hash Right Join  (cost=4232.92..5567.75 rows=9 width=66) (actual time=28.409..36.727 rows=9.00 loops=1)
+                          Hash Cond: (ride_requests.ride_id = r.id)
+                          Buffers: shared hit=1362
+                          ->  HashAggregate  (cost=4119.78..4681.78 rows=56200 width=12) (actual time=27.823..33.976 rows=57990.00 loops=1)
+                                Group Key: ride_requests.ride_id
+                                Batches: 1  Memory Usage: 4377kB
+                                Buffers: shared hit=1324
+                                ->  Seq Scan on ride_requests  (cost=0.00..3573.93 rows=109172 width=4) (actual time=0.004..12.283 rows=108894.00 loops=1)
+                                      Filter: ((status)::text = 'approved'::text)
+                                      Rows Removed by Filter: 71100
+                                      Buffers: shared hit=1324
+                          ->  Hash  (cost=113.02..113.02 rows=9 width=58) (actual time=0.100..0.101 rows=9.00 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=38
+                                ->  Nested Loop  (cost=4.65..113.02 rows=9 width=58) (actual time=0.025..0.096 rows=9.00 loops=1)
+                                      Buffers: shared hit=38
+                                      ->  Bitmap Heap Scan on ride_requests rq  (cost=4.36..38.25 rows=9 width=24) (actual time=0.015..0.025 rows=9.00 loops=1)
+                                            Recheck Cond: (rider_id = 1)
+                                            Heap Blocks: exact=9
+                                            Buffers: shared hit=11
+                                            ->  Bitmap Index Scan on idx_requests_rider  (cost=0.00..4.36 rows=9 width=0) (actual time=0.008..0.008 rows=9.00 loops=1)
+                                                  Index Cond: (rider_id = 1)
+                                                  Index Searches: 1
+                                                  Buffers: shared hit=2
+                                      ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=38) (actual time=0.007..0.007 rows=1.00 loops=9)
+                                            Index Cond: (id = rq.ride_id)
+                                            Index Searches: 9
+                                            Buffers: shared hit=27
+                    ->  Index Scan using events_pkey on events e  (cost=0.28..0.30 rows=1 width=22) (actual time=0.005..0.005 rows=1.00 loops=9)
+                          Index Cond: (id = r.event_id)
+                          Index Searches: 9
+                          Buffers: shared hit=27
+              ->  Memoize  (cost=0.14..0.16 rows=1 width=16) (actual time=0.003..0.003 rows=1.00 loops=9)
+                    Cache Key: r.zone_id
+                    Cache Mode: logical
+                    Hits: 3  Misses: 6  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=12
+                    ->  Index Scan using zones_pkey on zones z  (cost=0.13..0.15 rows=1 width=16) (actual time=0.002..0.002 rows=1.00 loops=6)
+                          Index Cond: (id = r.zone_id)
+                          Index Searches: 6
+                          Buffers: shared hit=12
+        ->  Index Scan using users_pkey on users d  (cost=0.29..0.34 rows=1 width=19) (actual time=0.006..0.006 rows=1.00 loops=9)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 9
+              Buffers: shared hit=27
+Planning:
+  Buffers: shared hit=131
+Planning Time: 1.504 ms
+Execution Time: 37.022 ms
+
+-- Run 3
+Sort  (cost=5574.83..5574.85 rows=9 width=126) (actual time=36.863..36.866 rows=9.00 loops=1)
+  Sort Key: e.event_date
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=1431
+  ->  Nested Loop  (cost=4233.62..5574.69 rows=9 width=126) (actual time=28.675..36.847 rows=9.00 loops=1)
+        Buffers: shared hit=1428
+        ->  Nested Loop  (cost=4233.34..5571.55 rows=9 width=92) (actual time=28.659..36.785 rows=9.00 loops=1)
+              Buffers: shared hit=1401
+              ->  Nested Loop  (cost=4233.19..5570.42 rows=9 width=84) (actual time=28.644..36.754 rows=9.00 loops=1)
+                    Buffers: shared hit=1389
+                    ->  Hash Right Join  (cost=4232.92..5567.75 rows=9 width=66) (actual time=28.615..36.693 rows=9.00 loops=1)
+                          Hash Cond: (ride_requests.ride_id = r.id)
+                          Buffers: shared hit=1362
+                          ->  HashAggregate  (cost=4119.78..4681.78 rows=56200 width=12) (actual time=28.102..33.998 rows=57990.00 loops=1)
+                                Group Key: ride_requests.ride_id
+                                Batches: 1  Memory Usage: 4377kB
+                                Buffers: shared hit=1324
+                                ->  Seq Scan on ride_requests  (cost=0.00..3573.93 rows=109172 width=4) (actual time=0.003..11.829 rows=108894.00 loops=1)
+                                      Filter: ((status)::text = 'approved'::text)
+                                      Rows Removed by Filter: 71100
+                                      Buffers: shared hit=1324
+                          ->  Hash  (cost=113.02..113.02 rows=9 width=58) (actual time=0.074..0.075 rows=9.00 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=38
+                                ->  Nested Loop  (cost=4.65..113.02 rows=9 width=58) (actual time=0.017..0.069 rows=9.00 loops=1)
+                                      Buffers: shared hit=38
+                                      ->  Bitmap Heap Scan on ride_requests rq  (cost=4.36..38.25 rows=9 width=24) (actual time=0.009..0.017 rows=9.00 loops=1)
+                                            Recheck Cond: (rider_id = 1)
+                                            Heap Blocks: exact=9
+                                            Buffers: shared hit=11
+                                            ->  Bitmap Index Scan on idx_requests_rider  (cost=0.00..4.36 rows=9 width=0) (actual time=0.004..0.004 rows=9.00 loops=1)
+                                                  Index Cond: (rider_id = 1)
+                                                  Index Searches: 1
+                                                  Buffers: shared hit=2
+                                      ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=38) (actual time=0.005..0.005 rows=1.00 loops=9)
+                                            Index Cond: (id = rq.ride_id)
+                                            Index Searches: 9
+                                            Buffers: shared hit=27
+                    ->  Index Scan using events_pkey on events e  (cost=0.28..0.30 rows=1 width=22) (actual time=0.005..0.005 rows=1.00 loops=9)
+                          Index Cond: (id = r.event_id)
+                          Index Searches: 9
+                          Buffers: shared hit=27
+              ->  Memoize  (cost=0.14..0.16 rows=1 width=16) (actual time=0.003..0.003 rows=1.00 loops=9)
+                    Cache Key: r.zone_id
+                    Cache Mode: logical
+                    Hits: 3  Misses: 6  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                    Buffers: shared hit=12
+                    ->  Index Scan using zones_pkey on zones z  (cost=0.13..0.15 rows=1 width=16) (actual time=0.003..0.003 rows=1.00 loops=6)
+                          Index Cond: (id = r.zone_id)
+                          Index Searches: 6
+                          Buffers: shared hit=12
+        ->  Index Scan using users_pkey on users d  (cost=0.29..0.34 rows=1 width=19) (actual time=0.004..0.004 rows=1.00 loops=9)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 9
+              Buffers: shared hit=27
+Planning:
+  Buffers: shared hit=131
+Planning Time: 1.309 ms
+Execution Time: 37.011 ms
+

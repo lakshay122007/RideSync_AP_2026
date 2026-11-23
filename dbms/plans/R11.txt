@@ -1,0 +1,97 @@
+-- R11 | READ | All requests on a ride (driver review screen, pending first)
+-- Parameters: :pend_ride, :pend_driver
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT rq.id, rq.status, rq.created_at,
+--        u.id AS rider_id, u.name AS rider_name, u.avg_rating
+-- FROM ride_requests rq
+-- JOIN rides r ON r.id = rq.ride_id
+-- JOIN users u ON u.id = rq.rider_id
+-- WHERE rq.ride_id = $1
+--   AND r.driver_id = $2
+-- ORDER BY CASE rq.status WHEN 'pending' THEN 0 ELSE 1 END, rq.created_at;
+-- 
+-- 
+
+-- Run 1
+Sort  (cost=49.23..49.24 rows=3 width=43) (actual time=0.056..0.056 rows=3.00 loops=1)
+  Sort Key: (CASE rq.status WHEN 'pending'::text THEN 0 ELSE 1 END), rq.created_at
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=21
+  ->  Nested Loop  (cost=1.00..49.21 rows=3 width=43) (actual time=0.028..0.044 rows=3.00 loops=1)
+        Buffers: shared hit=18
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.005..0.005 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: (driver_id = 311)
+              Index Searches: 1
+              Buffers: shared hit=3
+        ->  Nested Loop  (cost=0.71..40.86 rows=3 width=43) (actual time=0.021..0.036 rows=3.00 loops=1)
+              Buffers: shared hit=15
+              ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=3 width=28) (actual time=0.005..0.008 rows=3.00 loops=1)
+                    Index Cond: (ride_id = 10)
+                    Index Searches: 1
+                    Buffers: shared hit=6
+              ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.008..0.008 rows=1.00 loops=3)
+                    Index Cond: (id = rq.rider_id)
+                    Index Searches: 3
+                    Buffers: shared hit=9
+Planning:
+  Buffers: shared hit=55
+Planning Time: 0.971 ms
+Execution Time: 0.078 ms
+
+-- Run 2
+Sort  (cost=49.23..49.24 rows=3 width=43) (actual time=0.037..0.038 rows=3.00 loops=1)
+  Sort Key: (CASE rq.status WHEN 'pending'::text THEN 0 ELSE 1 END), rq.created_at
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=21
+  ->  Nested Loop  (cost=1.00..49.21 rows=3 width=43) (actual time=0.017..0.030 rows=3.00 loops=1)
+        Buffers: shared hit=18
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.002..0.002 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: (driver_id = 311)
+              Index Searches: 1
+              Buffers: shared hit=3
+        ->  Nested Loop  (cost=0.71..40.86 rows=3 width=43) (actual time=0.014..0.026 rows=3.00 loops=1)
+              Buffers: shared hit=15
+              ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=3 width=28) (actual time=0.002..0.004 rows=3.00 loops=1)
+                    Index Cond: (ride_id = 10)
+                    Index Searches: 1
+                    Buffers: shared hit=6
+              ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.007..0.007 rows=1.00 loops=3)
+                    Index Cond: (id = rq.rider_id)
+                    Index Searches: 3
+                    Buffers: shared hit=9
+Planning:
+  Buffers: shared hit=55
+Planning Time: 0.343 ms
+Execution Time: 0.052 ms
+
+-- Run 3
+Sort  (cost=49.23..49.24 rows=3 width=43) (actual time=0.059..0.060 rows=3.00 loops=1)
+  Sort Key: (CASE rq.status WHEN 'pending'::text THEN 0 ELSE 1 END), rq.created_at
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=21
+  ->  Nested Loop  (cost=1.00..49.21 rows=3 width=43) (actual time=0.030..0.045 rows=3.00 loops=1)
+        Buffers: shared hit=18
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.006..0.006 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: (driver_id = 311)
+              Index Searches: 1
+              Buffers: shared hit=3
+        ->  Nested Loop  (cost=0.71..40.86 rows=3 width=43) (actual time=0.022..0.037 rows=3.00 loops=1)
+              Buffers: shared hit=15
+              ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=3 width=28) (actual time=0.006..0.009 rows=3.00 loops=1)
+                    Index Cond: (ride_id = 10)
+                    Index Searches: 1
+                    Buffers: shared hit=6
+              ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.008..0.008 rows=1.00 loops=3)
+                    Index Cond: (id = rq.rider_id)
+                    Index Searches: 3
+                    Buffers: shared hit=9
+Planning:
+  Buffers: shared hit=55
+Planning Time: 0.469 ms
+Execution Time: 0.080 ms
+

@@ -1,0 +1,117 @@
+-- R7 | READ | Seats filled vs available per ride (event page chart)
+-- Parameters: :ev
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT r.id AS ride_id, u.name AS driver_name, z.name AS zone_name,
+--        r.total_seats,
+--        r.total_seats - r.seats_available AS seats_filled,
+--        r.seats_available
+-- FROM rides r
+-- JOIN users u ON u.id = r.driver_id
+-- JOIN zones z ON z.id = r.zone_id
+-- WHERE r.event_id = $1
+--   AND r.status IN ('open', 'full', 'completed')
+-- ORDER BY r.departure_time;
+-- 
+-- 
+
+-- Run 1
+Sort  (cost=418.76..418.83 rows=29 width=46) (actual time=0.185..0.186 rows=30.00 loops=1)
+  Sort Key: r.departure_time
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=126
+  ->  Nested Loop  (cost=86.59..418.05 rows=29 width=46) (actual time=0.032..0.175 rows=30.00 loops=1)
+        Join Filter: (z.id = r.zone_id)
+        Rows Removed by Join Filter: 90
+        Buffers: shared hit=123
+        ->  Nested Loop  (cost=86.59..414.62 rows=29 width=34) (actual time=0.025..0.155 rows=30.00 loops=1)
+              Buffers: shared hit=122
+              ->  Bitmap Heap Scan on rides r  (cost=86.31..189.77 rows=29 width=28) (actual time=0.018..0.077 rows=30.00 loops=1)
+                    Recheck Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full,completed}'::text[])))
+                    Heap Blocks: exact=30
+                    Buffers: shared hit=32
+                    ->  Bitmap Index Scan on idx_rides_event_zone  (cost=0.00..86.30 rows=29 width=0) (actual time=0.010..0.010 rows=30.00 loops=1)
+                          Index Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full,completed}'::text[])))
+                          Index Searches: 1
+                          Buffers: shared hit=2
+              ->  Index Scan using users_pkey on users u  (cost=0.29..7.75 rows=1 width=14) (actual time=0.002..0.002 rows=1.00 loops=30)
+                    Index Cond: (id = r.driver_id)
+                    Index Searches: 30
+                    Buffers: shared hit=90
+        ->  Materialize  (cost=0.00..1.09 rows=6 width=16) (actual time=0.000..0.000 rows=4.00 loops=30)
+              Storage: Memory  Maximum Storage: 17kB
+              Buffers: shared hit=1
+              ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.002..0.003 rows=6.00 loops=1)
+                    Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=93
+Planning Time: 0.574 ms
+Execution Time: 0.205 ms
+
+-- Run 2
+Sort  (cost=418.76..418.83 rows=29 width=46) (actual time=0.208..0.210 rows=30.00 loops=1)
+  Sort Key: r.departure_time
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=126
+  ->  Nested Loop  (cost=86.59..418.05 rows=29 width=46) (actual time=0.035..0.198 rows=30.00 loops=1)
+        Join Filter: (z.id = r.zone_id)
+        Rows Removed by Join Filter: 90
+        Buffers: shared hit=123
+        ->  Nested Loop  (cost=86.59..414.62 rows=29 width=34) (actual time=0.027..0.177 rows=30.00 loops=1)
+              Buffers: shared hit=122
+              ->  Bitmap Heap Scan on rides r  (cost=86.31..189.77 rows=29 width=28) (actual time=0.019..0.087 rows=30.00 loops=1)
+                    Recheck Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full,completed}'::text[])))
+                    Heap Blocks: exact=30
+                    Buffers: shared hit=32
+                    ->  Bitmap Index Scan on idx_rides_event_zone  (cost=0.00..86.30 rows=29 width=0) (actual time=0.010..0.010 rows=30.00 loops=1)
+                          Index Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full,completed}'::text[])))
+                          Index Searches: 1
+                          Buffers: shared hit=2
+              ->  Index Scan using users_pkey on users u  (cost=0.29..7.75 rows=1 width=14) (actual time=0.003..0.003 rows=1.00 loops=30)
+                    Index Cond: (id = r.driver_id)
+                    Index Searches: 30
+                    Buffers: shared hit=90
+        ->  Materialize  (cost=0.00..1.09 rows=6 width=16) (actual time=0.000..0.000 rows=4.00 loops=30)
+              Storage: Memory  Maximum Storage: 17kB
+              Buffers: shared hit=1
+              ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.003..0.003 rows=6.00 loops=1)
+                    Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=93
+Planning Time: 0.569 ms
+Execution Time: 0.227 ms
+
+-- Run 3
+Sort  (cost=418.76..418.83 rows=29 width=46) (actual time=0.179..0.181 rows=30.00 loops=1)
+  Sort Key: r.departure_time
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=126
+  ->  Nested Loop  (cost=86.59..418.05 rows=29 width=46) (actual time=0.033..0.169 rows=30.00 loops=1)
+        Join Filter: (z.id = r.zone_id)
+        Rows Removed by Join Filter: 90
+        Buffers: shared hit=123
+        ->  Nested Loop  (cost=86.59..414.62 rows=29 width=34) (actual time=0.026..0.148 rows=30.00 loops=1)
+              Buffers: shared hit=122
+              ->  Bitmap Heap Scan on rides r  (cost=86.31..189.77 rows=29 width=28) (actual time=0.019..0.073 rows=30.00 loops=1)
+                    Recheck Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full,completed}'::text[])))
+                    Heap Blocks: exact=30
+                    Buffers: shared hit=32
+                    ->  Bitmap Index Scan on idx_rides_event_zone  (cost=0.00..86.30 rows=29 width=0) (actual time=0.010..0.011 rows=30.00 loops=1)
+                          Index Cond: ((event_id = 122) AND ((status)::text = ANY ('{open,full,completed}'::text[])))
+                          Index Searches: 1
+                          Buffers: shared hit=2
+              ->  Index Scan using users_pkey on users u  (cost=0.29..7.75 rows=1 width=14) (actual time=0.002..0.002 rows=1.00 loops=30)
+                    Index Cond: (id = r.driver_id)
+                    Index Searches: 30
+                    Buffers: shared hit=90
+        ->  Materialize  (cost=0.00..1.09 rows=6 width=16) (actual time=0.000..0.000 rows=4.00 loops=30)
+              Storage: Memory  Maximum Storage: 17kB
+              Buffers: shared hit=1
+              ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.002..0.003 rows=6.00 loops=1)
+                    Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=93
+Planning Time: 0.556 ms
+Execution Time: 0.197 ms
+

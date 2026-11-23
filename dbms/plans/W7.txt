@@ -1,0 +1,79 @@
+-- W7 | WRITE | Notify every pending and approved rider of a cancelled ride
+-- Parameters: :pend_ride, 'Ride cancelled by the driver'
+-- Run first inside the same transaction: UPDATE rides SET status = 'cancelled' WHERE id = :pend_ride;
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- INSERT INTO notifications (user_id, message)
+-- SELECT rq.rider_id, $2
+-- FROM ride_requests rq
+-- JOIN rides r ON r.id = rq.ride_id
+-- WHERE rq.ride_id = $1
+--   AND r.status = 'cancelled'
+--   AND rq.status IN ('pending', 'approved');
+-- 
+-- 
+
+-- Run 1
+Insert on notifications  (cost=0.71..24.30 rows=0 width=0) (actual time=0.238..0.238 rows=0.00 loops=1)
+  Buffers: shared hit=44
+  ->  Nested Loop  (cost=0.71..24.30 rows=2 width=533) (actual time=0.050..0.057 rows=3.00 loops=1)
+        Buffers: shared hit=23
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.003..0.004 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: ((status)::text = 'cancelled'::text)
+              Index Searches: 1
+              Buffers: shared hit=3
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=2 width=8) (actual time=0.005..0.008 rows=3.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = ANY ('{pending,approved}'::text[]))
+              Index Searches: 1
+              Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.134 ms
+Trigger for constraint notifications_user_id_fkey: time=0.404 calls=3
+Execution Time: 0.657 ms
+
+-- Run 2
+Insert on notifications  (cost=0.71..24.30 rows=0 width=0) (actual time=0.138..0.138 rows=0.00 loops=1)
+  Buffers: shared hit=43
+  ->  Nested Loop  (cost=0.71..24.30 rows=2 width=533) (actual time=0.039..0.044 rows=3.00 loops=1)
+        Buffers: shared hit=23
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.002..0.003 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: ((status)::text = 'cancelled'::text)
+              Index Searches: 1
+              Buffers: shared hit=3
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=2 width=8) (actual time=0.003..0.005 rows=3.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = ANY ('{pending,approved}'::text[]))
+              Index Searches: 1
+              Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.088 ms
+Trigger for constraint notifications_user_id_fkey: time=0.365 calls=3
+Execution Time: 0.514 ms
+
+-- Run 3
+Insert on notifications  (cost=0.71..24.30 rows=0 width=0) (actual time=0.161..0.161 rows=0.00 loops=1)
+  Buffers: shared hit=43
+  ->  Nested Loop  (cost=0.71..24.30 rows=2 width=533) (actual time=0.048..0.053 rows=3.00 loops=1)
+        Buffers: shared hit=23
+        ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.003..0.003 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: ((status)::text = 'cancelled'::text)
+              Index Searches: 1
+              Buffers: shared hit=3
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=2 width=8) (actual time=0.005..0.008 rows=3.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = ANY ('{pending,approved}'::text[]))
+              Index Searches: 1
+              Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.103 ms
+Trigger for constraint notifications_user_id_fkey: time=0.360 calls=3
+Execution Time: 0.534 ms
+

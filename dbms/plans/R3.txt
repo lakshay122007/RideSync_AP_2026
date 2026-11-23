@@ -1,0 +1,47 @@
+-- R3 | READ | List all pickup zones
+-- Parameters: none
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT id, name
+-- FROM zones
+-- ORDER BY name;
+-- 
+-- 
+
+-- Run 1
+Sort  (cost=1.14..1.15 rows=6 width=16) (actual time=1.181..1.181 rows=6.00 loops=1)
+  Sort Key: name
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=4
+  ->  Seq Scan on zones  (cost=0.00..1.06 rows=6 width=16) (actual time=0.003..0.003 rows=6.00 loops=1)
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=39
+Planning Time: 0.217 ms
+Execution Time: 1.185 ms
+
+-- Run 2
+Sort  (cost=1.14..1.15 rows=6 width=16) (actual time=0.031..0.032 rows=6.00 loops=1)
+  Sort Key: name
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=4
+  ->  Seq Scan on zones  (cost=0.00..1.06 rows=6 width=16) (actual time=0.004..0.004 rows=6.00 loops=1)
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=39
+Planning Time: 0.186 ms
+Execution Time: 0.036 ms
+
+-- Run 3
+Sort  (cost=1.14..1.15 rows=6 width=16) (actual time=0.024..0.025 rows=6.00 loops=1)
+  Sort Key: name
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=4
+  ->  Seq Scan on zones  (cost=0.00..1.06 rows=6 width=16) (actual time=0.003..0.003 rows=6.00 loops=1)
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=39
+Planning Time: 0.202 ms
+Execution Time: 0.029 ms
+

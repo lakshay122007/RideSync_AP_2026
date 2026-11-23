@@ -1,0 +1,64 @@
+-- W8 | WRITE | Mark a ride completed (driver only, only after departure)
+-- Parameters: :done_ride, :done_driver
+-- Run first inside the same transaction: UPDATE rides SET status = 'open' WHERE id = :done_ride;
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- UPDATE rides
+-- SET status = 'completed'
+-- WHERE id = $1
+--   AND driver_id = $2
+--   AND status IN ('open', 'full')
+--   AND departure_time <= NOW()
+-- RETURNING id;
+-- 
+-- 
+
+-- Run 1
+Update on rides  (cost=0.29..8.32 rows=1 width=44) (actual time=0.047..0.048 rows=1.00 loops=1)
+  Buffers: shared hit=14
+  ->  Index Scan using rides_pkey on rides  (cost=0.29..8.32 rows=1 width=44) (actual time=0.003..0.004 rows=1.00 loops=1)
+        Index Cond: (id = 1)
+        Filter: (((status)::text = ANY ('{open,full}'::text[])) AND (driver_id = 32) AND (departure_time <= now()))
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.060 ms
+Trigger for constraint rides_event_id_fkey: time=0.078 calls=1
+Trigger for constraint rides_driver_id_fkey: time=0.279 calls=1
+Trigger for constraint rides_zone_id_fkey: time=0.262 calls=1
+Execution Time: 0.675 ms
+
+-- Run 2
+Update on rides  (cost=0.29..8.32 rows=1 width=44) (actual time=0.053..0.054 rows=1.00 loops=1)
+  Buffers: shared hit=14
+  ->  Index Scan using rides_pkey on rides  (cost=0.29..8.32 rows=1 width=44) (actual time=0.003..0.004 rows=1.00 loops=1)
+        Index Cond: (id = 1)
+        Filter: (((status)::text = ANY ('{open,full}'::text[])) AND (driver_id = 32) AND (departure_time <= now()))
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.063 ms
+Trigger for constraint rides_event_id_fkey: time=0.087 calls=1
+Trigger for constraint rides_driver_id_fkey: time=0.244 calls=1
+Trigger for constraint rides_zone_id_fkey: time=0.215 calls=1
+Execution Time: 0.609 ms
+
+-- Run 3
+Update on rides  (cost=0.29..8.32 rows=1 width=44) (actual time=0.046..0.047 rows=1.00 loops=1)
+  Buffers: shared hit=14
+  ->  Index Scan using rides_pkey on rides  (cost=0.29..8.32 rows=1 width=44) (actual time=0.003..0.004 rows=1.00 loops=1)
+        Index Cond: (id = 1)
+        Filter: (((status)::text = ANY ('{open,full}'::text[])) AND (driver_id = 32) AND (departure_time <= now()))
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.063 ms
+Trigger for constraint rides_event_id_fkey: time=0.093 calls=1
+Trigger for constraint rides_driver_id_fkey: time=0.309 calls=1
+Trigger for constraint rides_zone_id_fkey: time=0.275 calls=1
+Execution Time: 0.733 ms
+

@@ -1,0 +1,44 @@
+-- W15 | WRITE | Create one notification
+-- Parameters: :uid, 'Timing test notification'
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- INSERT INTO notifications (user_id, message)
+-- VALUES ($1, $2)
+-- RETURNING id;
+-- 
+-- 
+
+-- Run 1
+Insert on notifications  (cost=0.00..0.02 rows=1 width=533) (actual time=0.113..0.114 rows=1.00 loops=1)
+  Buffers: shared hit=22
+  ->  Result  (cost=0.00..0.02 rows=1 width=533) (actual time=0.029..0.030 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.025 ms
+Trigger for constraint notifications_user_id_fkey: time=0.281 calls=1
+Execution Time: 0.402 ms
+
+-- Run 2
+Insert on notifications  (cost=0.00..0.02 rows=1 width=533) (actual time=0.105..0.106 rows=1.00 loops=1)
+  Buffers: shared hit=22
+  ->  Result  (cost=0.00..0.02 rows=1 width=533) (actual time=0.031..0.031 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.024 ms
+Trigger for constraint notifications_user_id_fkey: time=0.246 calls=1
+Execution Time: 0.360 ms
+
+-- Run 3
+Insert on notifications  (cost=0.00..0.02 rows=1 width=533) (actual time=0.161..0.162 rows=1.00 loops=1)
+  Buffers: shared hit=22
+  ->  Result  (cost=0.00..0.02 rows=1 width=533) (actual time=0.041..0.041 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.031 ms
+Trigger for constraint notifications_user_id_fkey: time=0.339 calls=1
+Execution Time: 0.514 ms
+

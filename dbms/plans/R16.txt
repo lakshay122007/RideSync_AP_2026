@@ -1,0 +1,169 @@
+-- R16 | READ | Public profile with rating and ride counts
+-- Parameters: :rated
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT u.id, u.name, u.avg_rating,
+--        (SELECT COUNT(*) FROM ratings WHERE rated_id = u.id) AS rating_count,
+--        (SELECT COUNT(*) FROM rides
+--         WHERE driver_id = u.id AND status = 'completed') AS rides_driven,
+--        (SELECT COUNT(*)
+--         FROM ride_requests rq
+--         JOIN rides r ON r.id = rq.ride_id
+--         WHERE rq.rider_id = u.id AND rq.status = 'approved'
+--           AND r.status = 'completed') AS rides_taken
+-- FROM users u
+-- WHERE u.id = $1;
+-- 
+-- 
+
+-- Run 1
+Index Scan using users_pkey on users u  (cost=0.29..108.49 rows=1 width=43) (actual time=0.108..0.109 rows=1.00 loops=1)
+  Index Cond: (id = 171)
+  Index Searches: 1
+  Buffers: shared hit=40
+  SubPlan 1
+    ->  Aggregate  (cost=4.39..4.40 rows=1 width=8) (actual time=0.015..0.015 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_ratings_rated on ratings  (cost=0.29..4.38 rows=5 width=0) (actual time=0.011..0.012 rows=11.00 loops=1)
+                Index Cond: (rated_id = u.id)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  SubPlan 2
+    ->  Aggregate  (cost=15.93..15.94 rows=1 width=8) (actual time=0.018..0.018 rows=1.00 loops=1)
+          Buffers: shared hit=5
+          ->  Bitmap Heap Scan on rides  (cost=4.31..15.93 rows=2 width=0) (actual time=0.012..0.017 rows=3.00 loops=1)
+                Recheck Cond: (driver_id = u.id)
+                Filter: ((status)::text = 'completed'::text)
+                Heap Blocks: exact=3
+                Buffers: shared hit=5
+                ->  Bitmap Index Scan on idx_rides_driver  (cost=0.00..4.31 rows=3 width=0) (actual time=0.005..0.005 rows=3.00 loops=1)
+                      Index Cond: (driver_id = u.id)
+                      Index Searches: 1
+                      Buffers: shared hit=2
+  SubPlan 3
+    ->  Aggregate  (cost=79.83..79.84 rows=1 width=8) (actual time=0.063..0.063 rows=1.00 loops=1)
+          Buffers: shared hit=29
+          ->  Nested Loop  (cost=4.65..79.82 rows=3 width=0) (actual time=0.023..0.062 rows=6.00 loops=1)
+                Buffers: shared hit=29
+                ->  Bitmap Heap Scan on ride_requests rq  (cost=4.36..38.27 rows=5 width=4) (actual time=0.013..0.023 rows=6.00 loops=1)
+                      Recheck Cond: (rider_id = u.id)
+                      Filter: ((status)::text = 'approved'::text)
+                      Rows Removed by Filter: 3
+                      Heap Blocks: exact=9
+                      Buffers: shared hit=11
+                      ->  Bitmap Index Scan on idx_requests_rider  (cost=0.00..4.36 rows=9 width=0) (actual time=0.009..0.009 rows=9.00 loops=1)
+                            Index Cond: (rider_id = u.id)
+                            Index Searches: 1
+                            Buffers: shared hit=2
+                ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.006..0.006 rows=1.00 loops=6)
+                      Index Cond: (id = rq.ride_id)
+                      Filter: ((status)::text = 'completed'::text)
+                      Index Searches: 6
+                      Buffers: shared hit=18
+Planning:
+  Buffers: shared hit=51
+Planning Time: 0.615 ms
+Execution Time: 0.143 ms
+
+-- Run 2
+Index Scan using users_pkey on users u  (cost=0.29..108.49 rows=1 width=43) (actual time=0.106..0.107 rows=1.00 loops=1)
+  Index Cond: (id = 171)
+  Index Searches: 1
+  Buffers: shared hit=40
+  SubPlan 1
+    ->  Aggregate  (cost=4.39..4.40 rows=1 width=8) (actual time=0.014..0.014 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_ratings_rated on ratings  (cost=0.29..4.38 rows=5 width=0) (actual time=0.010..0.011 rows=11.00 loops=1)
+                Index Cond: (rated_id = u.id)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  SubPlan 2
+    ->  Aggregate  (cost=15.93..15.94 rows=1 width=8) (actual time=0.016..0.016 rows=1.00 loops=1)
+          Buffers: shared hit=5
+          ->  Bitmap Heap Scan on rides  (cost=4.31..15.93 rows=2 width=0) (actual time=0.011..0.015 rows=3.00 loops=1)
+                Recheck Cond: (driver_id = u.id)
+                Filter: ((status)::text = 'completed'::text)
+                Heap Blocks: exact=3
+                Buffers: shared hit=5
+                ->  Bitmap Index Scan on idx_rides_driver  (cost=0.00..4.31 rows=3 width=0) (actual time=0.004..0.004 rows=3.00 loops=1)
+                      Index Cond: (driver_id = u.id)
+                      Index Searches: 1
+                      Buffers: shared hit=2
+  SubPlan 3
+    ->  Aggregate  (cost=79.83..79.84 rows=1 width=8) (actual time=0.064..0.064 rows=1.00 loops=1)
+          Buffers: shared hit=29
+          ->  Nested Loop  (cost=4.65..79.82 rows=3 width=0) (actual time=0.023..0.063 rows=6.00 loops=1)
+                Buffers: shared hit=29
+                ->  Bitmap Heap Scan on ride_requests rq  (cost=4.36..38.27 rows=5 width=4) (actual time=0.014..0.023 rows=6.00 loops=1)
+                      Recheck Cond: (rider_id = u.id)
+                      Filter: ((status)::text = 'approved'::text)
+                      Rows Removed by Filter: 3
+                      Heap Blocks: exact=9
+                      Buffers: shared hit=11
+                      ->  Bitmap Index Scan on idx_requests_rider  (cost=0.00..4.36 rows=9 width=0) (actual time=0.009..0.009 rows=9.00 loops=1)
+                            Index Cond: (rider_id = u.id)
+                            Index Searches: 1
+                            Buffers: shared hit=2
+                ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.006..0.006 rows=1.00 loops=6)
+                      Index Cond: (id = rq.ride_id)
+                      Filter: ((status)::text = 'completed'::text)
+                      Index Searches: 6
+                      Buffers: shared hit=18
+Planning:
+  Buffers: shared hit=51
+Planning Time: 0.377 ms
+Execution Time: 0.140 ms
+
+-- Run 3
+Index Scan using users_pkey on users u  (cost=0.29..108.49 rows=1 width=43) (actual time=0.776..0.780 rows=1.00 loops=1)
+  Index Cond: (id = 171)
+  Index Searches: 1
+  Buffers: shared hit=40
+  SubPlan 1
+    ->  Aggregate  (cost=4.39..4.40 rows=1 width=8) (actual time=0.016..0.016 rows=1.00 loops=1)
+          Buffers: shared hit=3
+          ->  Index Only Scan using idx_ratings_rated on ratings  (cost=0.29..4.38 rows=5 width=0) (actual time=0.011..0.012 rows=11.00 loops=1)
+                Index Cond: (rated_id = u.id)
+                Heap Fetches: 0
+                Index Searches: 1
+                Buffers: shared hit=3
+  SubPlan 2
+    ->  Aggregate  (cost=15.93..15.94 rows=1 width=8) (actual time=0.523..0.524 rows=1.00 loops=1)
+          Buffers: shared hit=5
+          ->  Bitmap Heap Scan on rides  (cost=4.31..15.93 rows=2 width=0) (actual time=0.072..0.429 rows=3.00 loops=1)
+                Recheck Cond: (driver_id = u.id)
+                Filter: ((status)::text = 'completed'::text)
+                Heap Blocks: exact=3
+                Buffers: shared hit=5
+                ->  Bitmap Index Scan on idx_rides_driver  (cost=0.00..4.31 rows=3 width=0) (actual time=0.005..0.005 rows=3.00 loops=1)
+                      Index Cond: (driver_id = u.id)
+                      Index Searches: 1
+                      Buffers: shared hit=2
+  SubPlan 3
+    ->  Aggregate  (cost=79.83..79.84 rows=1 width=8) (actual time=0.221..0.221 rows=1.00 loops=1)
+          Buffers: shared hit=29
+          ->  Nested Loop  (cost=4.65..79.82 rows=3 width=0) (actual time=0.135..0.215 rows=6.00 loops=1)
+                Buffers: shared hit=29
+                ->  Bitmap Heap Scan on ride_requests rq  (cost=4.36..38.27 rows=5 width=4) (actual time=0.056..0.077 rows=6.00 loops=1)
+                      Recheck Cond: (rider_id = u.id)
+                      Filter: ((status)::text = 'approved'::text)
+                      Rows Removed by Filter: 3
+                      Heap Blocks: exact=9
+                      Buffers: shared hit=11
+                      ->  Bitmap Index Scan on idx_requests_rider  (cost=0.00..4.36 rows=9 width=0) (actual time=0.016..0.016 rows=9.00 loops=1)
+                            Index Cond: (rider_id = u.id)
+                            Index Searches: 1
+                            Buffers: shared hit=2
+                ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=4) (actual time=0.021..0.021 rows=1.00 loops=6)
+                      Index Cond: (id = rq.ride_id)
+                      Filter: ((status)::text = 'completed'::text)
+                      Index Searches: 6
+                      Buffers: shared hit=18
+Planning:
+  Buffers: shared hit=51
+Planning Time: 0.418 ms
+Execution Time: 0.881 ms
+

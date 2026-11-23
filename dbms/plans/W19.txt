@@ -1,0 +1,132 @@
+-- W19 | WRITE | Departure reminders for rides leaving within the hour (cron, every 15 min)
+-- Parameters: none
+-- Run first inside the same transaction: UPDATE rides SET departure_time = NOW() + INTERVAL '30 minutes', reminder_sent = FALSE WHERE id IN (SELECT id FROM rides WHERE status = 'open' ORDER BY id LIMIT 200);
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- WITH due AS (
+--   UPDATE rides
+--   SET reminder_sent = TRUE
+--   WHERE reminder_sent = FALSE
+--     AND status IN ('open', 'full')
+--     AND departure_time BETWEEN NOW() AND NOW() + INTERVAL '1 hour'
+--   RETURNING id, driver_id
+-- )
+-- INSERT INTO notifications (user_id, message)
+-- SELECT d.driver_id, 'Reminder: your ride leaves within the hour.'
+-- FROM due d
+-- UNION ALL
+-- SELECT rq.rider_id, 'Reminder: your ride leaves within the hour.'
+-- FROM due d
+-- JOIN ride_requests rq ON rq.ride_id = d.id AND rq.status = 'approved';
+-- 
+-- 
+
+-- Run 1
+Insert on notifications  (cost=2797.00..3361.11 rows=0 width=0) (actual time=13.932..13.934 rows=0.00 loops=1)
+  Buffers: shared hit=7723 dirtied=6 written=6
+  CTE due
+    ->  Update on rides  (cost=0.00..2797.00 rows=36 width=7) (actual time=0.060..9.751 rows=200.00 loops=1)
+          Buffers: shared hit=4082
+          ->  Seq Scan on rides  (cost=0.00..2797.00 rows=36 width=7) (actual time=0.009..8.290 rows=200.00 loops=1)
+                Filter: ((NOT reminder_sent) AND ((status)::text = ANY ('{open,full}'::text[])) AND (departure_time >= now()) AND (departure_time <= (now() + '01:00:00'::interval)))
+                Rows Removed by Filter: 59800
+                Buffers: shared hit=1297
+  ->  Result  (cost=0.00..564.11 rows=102 width=533) (actual time=0.099..10.494 rows=400.00 loops=1)
+        Buffers: shared hit=5695
+        ->  Append  (cost=0.00..562.07 rows=102 width=36) (actual time=0.062..10.310 rows=400.00 loops=1)
+              Buffers: shared hit=5284
+              ->  CTE Scan on due d  (cost=0.00..0.72 rows=36 width=36) (actual time=0.061..9.791 rows=200.00 loops=1)
+                    Storage: Memory  Maximum Storage: 23kB
+                    Buffers: shared hit=4082
+              ->  Nested Loop  (cost=0.42..560.84 rows=66 width=36) (actual time=0.024..0.491 rows=200.00 loops=1)
+                    Buffers: shared hit=1202
+                    ->  CTE Scan on due d_1  (cost=0.00..0.72 rows=36 width=4) (actual time=0.001..0.011 rows=200.00 loops=1)
+                          Storage: Memory  Maximum Storage: 23kB
+                    ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.54 rows=2 width=8) (actual time=0.001..0.002 rows=1.00 loops=200)
+                          Index Cond: (ride_id = d_1.id)
+                          Filter: ((status)::text = 'approved'::text)
+                          Rows Removed by Filter: 2
+                          Index Searches: 200
+                          Buffers: shared hit=1202
+Planning:
+  Buffers: shared hit=19
+Planning Time: 0.190 ms
+Trigger for constraint rides_event_id_fkey on rides: time=1.110 calls=200
+Trigger for constraint rides_driver_id_fkey on rides: time=1.741 calls=200
+Trigger for constraint rides_zone_id_fkey on rides: time=1.067 calls=200
+Trigger for constraint notifications_user_id_fkey on notifications: time=1.764 calls=400
+Execution Time: 19.706 ms
+
+-- Run 2
+Insert on notifications  (cost=2797.00..3361.11 rows=0 width=0) (actual time=12.588..12.591 rows=0.00 loops=1)
+  Buffers: shared hit=7717 dirtied=5 written=5
+  CTE due
+    ->  Update on rides  (cost=0.00..2797.00 rows=36 width=7) (actual time=0.060..9.462 rows=200.00 loops=1)
+          Buffers: shared hit=4089
+          ->  Seq Scan on rides  (cost=0.00..2797.00 rows=36 width=7) (actual time=0.013..7.861 rows=200.00 loops=1)
+                Filter: ((NOT reminder_sent) AND ((status)::text = ANY ('{open,full}'::text[])) AND (departure_time >= now()) AND (departure_time <= (now() + '01:00:00'::interval)))
+                Rows Removed by Filter: 59800
+                Buffers: shared hit=1297
+  ->  Result  (cost=0.00..564.11 rows=102 width=533) (actual time=0.096..10.188 rows=400.00 loops=1)
+        Buffers: shared hit=5700
+        ->  Append  (cost=0.00..562.07 rows=102 width=36) (actual time=0.062..10.009 rows=400.00 loops=1)
+              Buffers: shared hit=5289
+              ->  CTE Scan on due d  (cost=0.00..0.72 rows=36 width=36) (actual time=0.061..9.501 rows=200.00 loops=1)
+                    Storage: Memory  Maximum Storage: 23kB
+                    Buffers: shared hit=4089
+              ->  Nested Loop  (cost=0.42..560.84 rows=66 width=36) (actual time=0.020..0.479 rows=200.00 loops=1)
+                    Buffers: shared hit=1200
+                    ->  CTE Scan on due d_1  (cost=0.00..0.72 rows=36 width=4) (actual time=0.001..0.011 rows=200.00 loops=1)
+                          Storage: Memory  Maximum Storage: 23kB
+                    ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.54 rows=2 width=8) (actual time=0.001..0.002 rows=1.00 loops=200)
+                          Index Cond: (ride_id = d_1.id)
+                          Filter: ((status)::text = 'approved'::text)
+                          Rows Removed by Filter: 2
+                          Index Searches: 200
+                          Buffers: shared hit=1200
+Planning:
+  Buffers: shared hit=19
+Planning Time: 0.163 ms
+Trigger for constraint rides_event_id_fkey on rides: time=1.149 calls=200
+Trigger for constraint rides_driver_id_fkey on rides: time=1.771 calls=200
+Trigger for constraint rides_zone_id_fkey on rides: time=1.148 calls=200
+Trigger for constraint notifications_user_id_fkey on notifications: time=1.876 calls=400
+Execution Time: 18.628 ms
+
+-- Run 3
+Insert on notifications  (cost=2797.00..3361.11 rows=0 width=0) (actual time=10.708..10.709 rows=0.00 loops=1)
+  Buffers: shared hit=7717 dirtied=6 written=6
+  CTE due
+    ->  Update on rides  (cost=0.00..2797.00 rows=36 width=7) (actual time=0.058..8.357 rows=200.00 loops=1)
+          Buffers: shared hit=4087
+          ->  Seq Scan on rides  (cost=0.00..2797.00 rows=36 width=7) (actual time=0.014..7.001 rows=200.00 loops=1)
+                Filter: ((NOT reminder_sent) AND ((status)::text = ANY ('{open,full}'::text[])) AND (departure_time >= now()) AND (departure_time <= (now() + '01:00:00'::interval)))
+                Rows Removed by Filter: 59800
+                Buffers: shared hit=1297
+  ->  Result  (cost=0.00..564.11 rows=102 width=533) (actual time=0.088..8.984 rows=400.00 loops=1)
+        Buffers: shared hit=5698
+        ->  Append  (cost=0.00..562.07 rows=102 width=36) (actual time=0.060..8.818 rows=400.00 loops=1)
+              Buffers: shared hit=5287
+              ->  CTE Scan on due d  (cost=0.00..0.72 rows=36 width=36) (actual time=0.059..8.397 rows=200.00 loops=1)
+                    Storage: Memory  Maximum Storage: 23kB
+                    Buffers: shared hit=4087
+              ->  Nested Loop  (cost=0.42..560.84 rows=66 width=36) (actual time=0.006..0.395 rows=200.00 loops=1)
+                    Buffers: shared hit=1200
+                    ->  CTE Scan on due d_1  (cost=0.00..0.72 rows=36 width=4) (actual time=0.000..0.010 rows=200.00 loops=1)
+                          Storage: Memory  Maximum Storage: 23kB
+                    ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.54 rows=2 width=8) (actual time=0.001..0.002 rows=1.00 loops=200)
+                          Index Cond: (ride_id = d_1.id)
+                          Filter: ((status)::text = 'approved'::text)
+                          Rows Removed by Filter: 2
+                          Index Searches: 200
+                          Buffers: shared hit=1200
+Planning:
+  Buffers: shared hit=19
+Planning Time: 0.160 ms
+Trigger for constraint rides_event_id_fkey on rides: time=0.911 calls=200
+Trigger for constraint rides_driver_id_fkey on rides: time=1.366 calls=200
+Trigger for constraint rides_zone_id_fkey on rides: time=0.985 calls=200
+Trigger for constraint notifications_user_id_fkey on notifications: time=1.627 calls=400
+Execution Time: 15.675 ms
+

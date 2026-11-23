@@ -1,0 +1,47 @@
+-- W6 | WRITE | Cancel a ride (driver only)
+-- Parameters: :pend_ride, :pend_driver
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- UPDATE rides
+-- SET status = 'cancelled'
+-- WHERE id = $1
+--   AND driver_id = $2
+--   AND status IN ('open', 'full')
+-- RETURNING id;
+-- 
+-- 
+
+-- Run 1
+Update on rides  (cost=0.29..8.31 rows=1 width=44) (actual time=0.188..0.189 rows=1.00 loops=1)
+  Buffers: shared hit=36
+  ->  Index Scan using rides_pkey on rides  (cost=0.29..8.31 rows=1 width=44) (actual time=0.004..0.005 rows=1.00 loops=1)
+        Index Cond: (id = 10)
+        Filter: (((status)::text = ANY ('{open,full}'::text[])) AND (driver_id = 311))
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning Time: 0.060 ms
+Execution Time: 0.301 ms
+
+-- Run 2
+Update on rides  (cost=0.29..8.31 rows=1 width=44) (actual time=0.139..0.140 rows=1.00 loops=1)
+  Buffers: shared hit=36
+  ->  Index Scan using rides_pkey on rides  (cost=0.29..8.31 rows=1 width=44) (actual time=0.004..0.005 rows=1.00 loops=1)
+        Index Cond: (id = 10)
+        Filter: (((status)::text = ANY ('{open,full}'::text[])) AND (driver_id = 311))
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning Time: 0.056 ms
+Execution Time: 0.221 ms
+
+-- Run 3
+Update on rides  (cost=0.29..8.31 rows=1 width=44) (actual time=0.140..0.141 rows=1.00 loops=1)
+  Buffers: shared hit=36
+  ->  Index Scan using rides_pkey on rides  (cost=0.29..8.31 rows=1 width=44) (actual time=0.005..0.005 rows=1.00 loops=1)
+        Index Cond: (id = 10)
+        Filter: (((status)::text = ANY ('{open,full}'::text[])) AND (driver_id = 311))
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning Time: 0.132 ms
+Execution Time: 0.221 ms
+

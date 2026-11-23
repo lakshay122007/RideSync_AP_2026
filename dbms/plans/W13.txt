@@ -1,0 +1,73 @@
+-- W13 | WRITE | Cancel my seat request
+-- Parameters: :appr_req, :appr_rider
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- DELETE FROM ride_requests
+-- WHERE id = $1
+--   AND rider_id = $2
+--   AND ride_id IN (SELECT id FROM rides WHERE status IN ('open', 'full'))
+-- RETURNING ride_id, status;
+-- 
+-- 
+
+-- Run 1
+Delete on ride_requests  (cost=0.71..16.75 rows=1 width=12) (actual time=0.030..0.031 rows=1.00 loops=1)
+  Buffers: shared hit=10
+  ->  Nested Loop  (cost=0.71..16.75 rows=1 width=12) (actual time=0.008..0.008 rows=1.00 loops=1)
+        Buffers: shared hit=7
+        ->  Index Scan using ride_requests_pkey on ride_requests  (cost=0.42..8.44 rows=1 width=10) (actual time=0.004..0.005 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: (rider_id = 272)
+              Index Searches: 1
+              Buffers: shared hit=4
+        ->  Index Scan using rides_pkey on rides  (cost=0.29..8.31 rows=1 width=10) (actual time=0.003..0.003 rows=1.00 loops=1)
+              Index Cond: (id = ride_requests.ride_id)
+              Filter: ((status)::text = ANY ('{open,full}'::text[]))
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=17
+Planning Time: 0.188 ms
+Execution Time: 0.097 ms
+
+-- Run 2
+Delete on ride_requests  (cost=0.71..16.75 rows=1 width=12) (actual time=0.041..0.043 rows=1.00 loops=1)
+  Buffers: shared hit=9
+  ->  Nested Loop  (cost=0.71..16.75 rows=1 width=12) (actual time=0.010..0.010 rows=1.00 loops=1)
+        Buffers: shared hit=7
+        ->  Index Scan using ride_requests_pkey on ride_requests  (cost=0.42..8.44 rows=1 width=10) (actual time=0.006..0.006 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: (rider_id = 272)
+              Index Searches: 1
+              Buffers: shared hit=4
+        ->  Index Scan using rides_pkey on rides  (cost=0.29..8.31 rows=1 width=10) (actual time=0.003..0.003 rows=1.00 loops=1)
+              Index Cond: (id = ride_requests.ride_id)
+              Filter: ((status)::text = ANY ('{open,full}'::text[]))
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=18
+Planning Time: 0.130 ms
+Execution Time: 0.136 ms
+
+-- Run 3
+Delete on ride_requests  (cost=0.71..16.75 rows=1 width=12) (actual time=0.040..0.041 rows=1.00 loops=1)
+  Buffers: shared hit=9
+  ->  Nested Loop  (cost=0.71..16.75 rows=1 width=12) (actual time=0.008..0.009 rows=1.00 loops=1)
+        Buffers: shared hit=7
+        ->  Index Scan using ride_requests_pkey on ride_requests  (cost=0.42..8.44 rows=1 width=10) (actual time=0.005..0.005 rows=1.00 loops=1)
+              Index Cond: (id = 10)
+              Filter: (rider_id = 272)
+              Index Searches: 1
+              Buffers: shared hit=4
+        ->  Index Scan using rides_pkey on rides  (cost=0.29..8.31 rows=1 width=10) (actual time=0.002..0.002 rows=1.00 loops=1)
+              Index Cond: (id = ride_requests.ride_id)
+              Filter: ((status)::text = ANY ('{open,full}'::text[]))
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=18
+Planning Time: 0.125 ms
+Execution Time: 0.124 ms
+

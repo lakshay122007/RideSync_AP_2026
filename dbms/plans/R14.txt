@@ -1,0 +1,107 @@
+-- R14 | READ | Pre-fill data to repeat a ride on the next occurrence of a recurring event
+-- Parameters: :done_ride, :done_driver
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT r.zone_id, r.total_seats, r.cost_split, r.total_cost,
+--        r.departure_time + INTERVAL '7 days' AS next_departure_time,
+--        (SELECT n.id
+--         FROM events n
+--         WHERE n.parent_event_id = COALESCE(e.parent_event_id, e.id)
+--           AND n.event_date > e.event_date
+--         ORDER BY n.event_date
+--         LIMIT 1) AS next_event_id
+-- FROM rides r
+-- JOIN events e ON e.id = r.event_id
+-- WHERE r.id = $1
+--   AND r.driver_id = $2;
+-- 
+-- 
+
+-- Run 1
+Nested Loop  (cost=0.57..24.93 rows=1 width=26) (actual time=0.022..0.023 rows=1.00 loops=1)
+  Buffers: shared hit=11
+  ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=26) (actual time=0.002..0.003 rows=1.00 loops=1)
+        Index Cond: (id = 1)
+        Filter: (driver_id = 32)
+        Index Searches: 1
+        Buffers: shared hit=3
+  ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=16) (actual time=0.002..0.002 rows=1.00 loops=1)
+        Index Cond: (id = r.event_id)
+        Index Searches: 1
+        Buffers: shared hit=3
+  SubPlan 1
+    ->  Limit  (cost=8.31..8.31 rows=1 width=12) (actual time=0.013..0.013 rows=0.00 loops=1)
+          Buffers: shared hit=5
+          ->  Sort  (cost=8.31..8.31 rows=1 width=12) (actual time=0.012..0.012 rows=0.00 loops=1)
+                Sort Key: n.event_date
+                Sort Method: quicksort  Memory: 25kB
+                Buffers: shared hit=5
+                ->  Index Scan using idx_events_parent on events n  (cost=0.28..8.30 rows=1 width=12) (actual time=0.003..0.003 rows=0.00 loops=1)
+                      Index Cond: (parent_event_id = COALESCE(e.parent_event_id, e.id))
+                      Filter: (event_date > e.event_date)
+                      Index Searches: 1
+                      Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=24
+Planning Time: 0.178 ms
+Execution Time: 0.063 ms
+
+-- Run 2
+Nested Loop  (cost=0.57..24.93 rows=1 width=26) (actual time=0.035..0.036 rows=1.00 loops=1)
+  Buffers: shared hit=11
+  ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=26) (actual time=0.005..0.005 rows=1.00 loops=1)
+        Index Cond: (id = 1)
+        Filter: (driver_id = 32)
+        Index Searches: 1
+        Buffers: shared hit=3
+  ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=16) (actual time=0.003..0.003 rows=1.00 loops=1)
+        Index Cond: (id = r.event_id)
+        Index Searches: 1
+        Buffers: shared hit=3
+  SubPlan 1
+    ->  Limit  (cost=8.31..8.31 rows=1 width=12) (actual time=0.022..0.022 rows=0.00 loops=1)
+          Buffers: shared hit=5
+          ->  Sort  (cost=8.31..8.31 rows=1 width=12) (actual time=0.022..0.022 rows=0.00 loops=1)
+                Sort Key: n.event_date
+                Sort Method: quicksort  Memory: 25kB
+                Buffers: shared hit=5
+                ->  Index Scan using idx_events_parent on events n  (cost=0.28..8.30 rows=1 width=12) (actual time=0.005..0.005 rows=0.00 loops=1)
+                      Index Cond: (parent_event_id = COALESCE(e.parent_event_id, e.id))
+                      Filter: (event_date > e.event_date)
+                      Index Searches: 1
+                      Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=24
+Planning Time: 0.238 ms
+Execution Time: 0.077 ms
+
+-- Run 3
+Nested Loop  (cost=0.57..24.93 rows=1 width=26) (actual time=0.023..0.024 rows=1.00 loops=1)
+  Buffers: shared hit=11
+  ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=26) (actual time=0.002..0.003 rows=1.00 loops=1)
+        Index Cond: (id = 1)
+        Filter: (driver_id = 32)
+        Index Searches: 1
+        Buffers: shared hit=3
+  ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=16) (actual time=0.003..0.003 rows=1.00 loops=1)
+        Index Cond: (id = r.event_id)
+        Index Searches: 1
+        Buffers: shared hit=3
+  SubPlan 1
+    ->  Limit  (cost=8.31..8.31 rows=1 width=12) (actual time=0.014..0.014 rows=0.00 loops=1)
+          Buffers: shared hit=5
+          ->  Sort  (cost=8.31..8.31 rows=1 width=12) (actual time=0.014..0.014 rows=0.00 loops=1)
+                Sort Key: n.event_date
+                Sort Method: quicksort  Memory: 25kB
+                Buffers: shared hit=5
+                ->  Index Scan using idx_events_parent on events n  (cost=0.28..8.30 rows=1 width=12) (actual time=0.004..0.004 rows=0.00 loops=1)
+                      Index Cond: (parent_event_id = COALESCE(e.parent_event_id, e.id))
+                      Filter: (event_date > e.event_date)
+                      Index Searches: 1
+                      Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=24
+Planning Time: 0.176 ms
+Execution Time: 0.040 ms
+

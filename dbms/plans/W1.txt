@@ -1,0 +1,35 @@
+-- W1 | WRITE | Register a user
+-- Parameters: 'Timing User', 'timing.user@ridesync.test', 'seed-hash'
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- INSERT INTO users (name, email, password_hash)
+-- VALUES ($1, $2, $3)
+-- RETURNING id, name, email;
+-- 
+-- 
+
+-- Run 1
+Insert on users  (cost=0.00..0.01 rows=1 width=1266) (actual time=0.259..0.259 rows=1.00 loops=1)
+  Buffers: shared hit=56
+  ->  Result  (cost=0.00..0.01 rows=1 width=1266) (actual time=0.028..0.028 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.026 ms
+Execution Time: 0.268 ms
+
+-- Run 2
+Insert on users  (cost=0.00..0.01 rows=1 width=1266) (actual time=0.254..0.254 rows=1.00 loops=1)
+  Buffers: shared hit=57
+  ->  Result  (cost=0.00..0.01 rows=1 width=1266) (actual time=0.030..0.030 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.027 ms
+Execution Time: 0.263 ms
+
+-- Run 3
+Insert on users  (cost=0.00..0.01 rows=1 width=1266) (actual time=0.311..0.312 rows=1.00 loops=1)
+  Buffers: shared hit=57
+  ->  Result  (cost=0.00..0.01 rows=1 width=1266) (actual time=0.034..0.035 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.028 ms
+Execution Time: 0.322 ms
+

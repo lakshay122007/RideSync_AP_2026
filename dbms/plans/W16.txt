@@ -1,0 +1,46 @@
+-- W16 | WRITE | Mark one notification as read
+-- Parameters: :notif, :uid
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- UPDATE notifications
+-- SET is_read = TRUE
+-- WHERE id = $1
+--   AND user_id = $2
+-- RETURNING id;
+-- 
+-- 
+
+-- Run 1
+Update on notifications  (cost=0.42..8.44 rows=1 width=7) (actual time=0.177..0.178 rows=1.00 loops=1)
+  Buffers: shared hit=22
+  ->  Index Scan using notifications_pkey on notifications  (cost=0.42..8.44 rows=1 width=7) (actual time=0.014..0.014 rows=1.00 loops=1)
+        Index Cond: (id = 60000)
+        Filter: (user_id = 1)
+        Index Searches: 1
+        Buffers: shared hit=4
+Planning Time: 0.038 ms
+Execution Time: 0.259 ms
+
+-- Run 2
+Update on notifications  (cost=0.42..8.44 rows=1 width=7) (actual time=0.096..0.097 rows=1.00 loops=1)
+  Buffers: shared hit=24
+  ->  Index Scan using notifications_pkey on notifications  (cost=0.42..8.44 rows=1 width=7) (actual time=0.011..0.012 rows=1.00 loops=1)
+        Index Cond: (id = 60000)
+        Filter: (user_id = 1)
+        Index Searches: 1
+        Buffers: shared hit=6
+Planning Time: 0.030 ms
+Execution Time: 0.157 ms
+
+-- Run 3
+Update on notifications  (cost=0.42..8.44 rows=1 width=7) (actual time=0.106..0.108 rows=1.00 loops=1)
+  Buffers: shared hit=24
+  ->  Index Scan using notifications_pkey on notifications  (cost=0.42..8.44 rows=1 width=7) (actual time=0.013..0.014 rows=1.00 loops=1)
+        Index Cond: (id = 60000)
+        Filter: (user_id = 1)
+        Index Searches: 1
+        Buffers: shared hit=6
+Planning Time: 0.030 ms
+Execution Time: 0.173 ms
+

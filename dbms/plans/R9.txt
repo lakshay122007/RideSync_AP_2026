@@ -1,0 +1,140 @@
+-- R9 | READ | Ride details with event, zone, driver and cost share
+-- Parameters: :pend_ride
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT r.id, r.event_id, r.driver_id, r.zone_id, r.departure_time,
+--        r.total_seats, r.seats_available, r.cost_split, r.total_cost, r.status,
+--        e.name AS event_name, e.event_date, e.location,
+--        z.name AS zone_name,
+--        d.name AS driver_name, d.avg_rating,
+--        COALESCE(a.approved_count, 0) AS approved_count,
+--        CASE WHEN r.cost_split
+--             THEN ROUND(r.total_cost / (COALESCE(a.approved_count, 0) + 1), 2)
+--        END AS cost_share
+-- FROM rides r
+-- JOIN events e ON e.id = r.event_id
+-- JOIN zones  z ON z.id = r.zone_id
+-- JOIN users  d ON d.id = r.driver_id
+-- LEFT JOIN (SELECT ride_id, COUNT(*) AS approved_count
+--            FROM ride_requests
+--            WHERE status = 'approved'
+--            GROUP BY ride_id) a ON a.ride_id = r.id
+-- WHERE r.id = $1;
+-- 
+-- 
+
+-- Run 1
+Nested Loop Left Join  (cost=1.27..42.05 rows=1 width=139) (actual time=0.028..0.029 rows=1.00 loops=1)
+  Buffers: shared hit=16
+  ->  Nested Loop  (cost=0.85..26.05 rows=1 width=99) (actual time=0.016..0.017 rows=1.00 loops=1)
+        Buffers: shared hit=10
+        ->  Nested Loop  (cost=0.57..17.75 rows=1 width=84) (actual time=0.009..0.010 rows=1.00 loops=1)
+              Join Filter: (z.id = r.zone_id)
+              Rows Removed by Join Filter: 4
+              Buffers: shared hit=7
+              ->  Nested Loop  (cost=0.57..16.61 rows=1 width=72) (actual time=0.005..0.006 rows=1.00 loops=1)
+                    Buffers: shared hit=6
+                    ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=46) (actual time=0.002..0.002 rows=1.00 loops=1)
+                          Index Cond: (id = 10)
+                          Index Searches: 1
+                          Buffers: shared hit=3
+                    ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=30) (actual time=0.001..0.001 rows=1.00 loops=1)
+                          Index Cond: (id = r.event_id)
+                          Index Searches: 1
+                          Buffers: shared hit=3
+              ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.002..0.003 rows=5.00 loops=1)
+                    Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users d  (cost=0.29..8.30 rows=1 width=19) (actual time=0.006..0.006 rows=1.00 loops=1)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 1
+              Buffers: shared hit=3
+  ->  GroupAggregate  (cost=0.42..15.97 rows=1 width=12) (actual time=0.010..0.010 rows=1.00 loops=1)
+        Buffers: shared hit=6
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests  (cost=0.42..15.95 rows=2 width=4) (actual time=0.007..0.008 rows=1.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = 'approved'::text)
+              Rows Removed by Filter: 2
+              Index Searches: 1
+              Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=120
+Planning Time: 0.794 ms
+Execution Time: 0.055 ms
+
+-- Run 2
+Nested Loop Left Join  (cost=1.27..42.05 rows=1 width=139) (actual time=0.032..0.033 rows=1.00 loops=1)
+  Buffers: shared hit=16
+  ->  Nested Loop  (cost=0.85..26.05 rows=1 width=99) (actual time=0.019..0.020 rows=1.00 loops=1)
+        Buffers: shared hit=10
+        ->  Nested Loop  (cost=0.57..17.75 rows=1 width=84) (actual time=0.009..0.010 rows=1.00 loops=1)
+              Join Filter: (z.id = r.zone_id)
+              Rows Removed by Join Filter: 4
+              Buffers: shared hit=7
+              ->  Nested Loop  (cost=0.57..16.61 rows=1 width=72) (actual time=0.005..0.005 rows=1.00 loops=1)
+                    Buffers: shared hit=6
+                    ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=46) (actual time=0.002..0.002 rows=1.00 loops=1)
+                          Index Cond: (id = 10)
+                          Index Searches: 1
+                          Buffers: shared hit=3
+                    ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=30) (actual time=0.001..0.002 rows=1.00 loops=1)
+                          Index Cond: (id = r.event_id)
+                          Index Searches: 1
+                          Buffers: shared hit=3
+              ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.003..0.003 rows=5.00 loops=1)
+                    Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users d  (cost=0.29..8.30 rows=1 width=19) (actual time=0.009..0.009 rows=1.00 loops=1)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 1
+              Buffers: shared hit=3
+  ->  GroupAggregate  (cost=0.42..15.97 rows=1 width=12) (actual time=0.010..0.010 rows=1.00 loops=1)
+        Buffers: shared hit=6
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests  (cost=0.42..15.95 rows=2 width=4) (actual time=0.007..0.009 rows=1.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = 'approved'::text)
+              Rows Removed by Filter: 2
+              Index Searches: 1
+              Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=120
+Planning Time: 0.780 ms
+Execution Time: 0.061 ms
+
+-- Run 3
+Nested Loop Left Join  (cost=1.27..42.05 rows=1 width=139) (actual time=0.029..0.030 rows=1.00 loops=1)
+  Buffers: shared hit=16
+  ->  Nested Loop  (cost=0.85..26.05 rows=1 width=99) (actual time=0.017..0.018 rows=1.00 loops=1)
+        Buffers: shared hit=10
+        ->  Nested Loop  (cost=0.57..17.75 rows=1 width=84) (actual time=0.009..0.010 rows=1.00 loops=1)
+              Join Filter: (z.id = r.zone_id)
+              Rows Removed by Join Filter: 4
+              Buffers: shared hit=7
+              ->  Nested Loop  (cost=0.57..16.61 rows=1 width=72) (actual time=0.005..0.005 rows=1.00 loops=1)
+                    Buffers: shared hit=6
+                    ->  Index Scan using rides_pkey on rides r  (cost=0.29..8.31 rows=1 width=46) (actual time=0.002..0.002 rows=1.00 loops=1)
+                          Index Cond: (id = 10)
+                          Index Searches: 1
+                          Buffers: shared hit=3
+                    ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=30) (actual time=0.002..0.002 rows=1.00 loops=1)
+                          Index Cond: (id = r.event_id)
+                          Index Searches: 1
+                          Buffers: shared hit=3
+              ->  Seq Scan on zones z  (cost=0.00..1.06 rows=6 width=16) (actual time=0.003..0.003 rows=5.00 loops=1)
+                    Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users d  (cost=0.29..8.30 rows=1 width=19) (actual time=0.007..0.007 rows=1.00 loops=1)
+              Index Cond: (id = r.driver_id)
+              Index Searches: 1
+              Buffers: shared hit=3
+  ->  GroupAggregate  (cost=0.42..15.97 rows=1 width=12) (actual time=0.010..0.010 rows=1.00 loops=1)
+        Buffers: shared hit=6
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests  (cost=0.42..15.95 rows=2 width=4) (actual time=0.006..0.008 rows=1.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = 'approved'::text)
+              Rows Removed by Filter: 2
+              Index Searches: 1
+              Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=120
+Planning Time: 0.720 ms
+Execution Time: 0.057 ms
+

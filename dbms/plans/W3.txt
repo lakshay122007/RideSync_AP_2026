@@ -1,0 +1,46 @@
+-- W3 | WRITE | Update an event (creator only)
+-- Parameters: :ev, 'Renamed Event', '2027-01-01 10:00', 'Venue 1', 'gym', false, :ev_owner
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- UPDATE events
+-- SET name = $2, event_date = $3, location = $4, category = $5, is_recurring = $6
+-- WHERE id = $1
+--   AND created_by = $7
+-- RETURNING id;
+-- 
+-- 
+
+-- Run 1
+Update on events  (cost=0.28..8.30 rows=1 width=809) (actual time=0.129..0.130 rows=1.00 loops=1)
+  Buffers: shared hit=23
+  ->  Index Scan using events_pkey on events  (cost=0.28..8.30 rows=1 width=809) (actual time=0.004..0.004 rows=1.00 loops=1)
+        Index Cond: (id = 122)
+        Filter: (created_by = 4515)
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning Time: 0.044 ms
+Execution Time: 0.205 ms
+
+-- Run 2
+Update on events  (cost=0.28..8.30 rows=1 width=809) (actual time=0.147..0.148 rows=1.00 loops=1)
+  Buffers: shared hit=25
+  ->  Index Scan using events_pkey on events  (cost=0.28..8.30 rows=1 width=809) (actual time=0.005..0.006 rows=1.00 loops=1)
+        Index Cond: (id = 122)
+        Filter: (created_by = 4515)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning Time: 0.049 ms
+Execution Time: 0.220 ms
+
+-- Run 3
+Update on events  (cost=0.28..8.30 rows=1 width=809) (actual time=0.215..0.217 rows=1.00 loops=1)
+  Buffers: shared hit=25
+  ->  Index Scan using events_pkey on events  (cost=0.28..8.30 rows=1 width=809) (actual time=0.009..0.010 rows=1.00 loops=1)
+        Index Cond: (id = 122)
+        Filter: (created_by = 4515)
+        Index Searches: 1
+        Buffers: shared hit=5
+Planning Time: 0.057 ms
+Execution Time: 0.315 ms
+

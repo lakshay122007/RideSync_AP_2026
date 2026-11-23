@@ -1,0 +1,41 @@
+-- R2 | READ | Current user by id
+-- Parameters: :uid
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT id, name, email, avg_rating
+-- FROM users
+-- WHERE id = $1;
+-- 
+-- 
+
+-- Run 1
+Index Scan using users_pkey on users  (cost=0.29..8.30 rows=1 width=42) (actual time=0.008..0.008 rows=1.00 loops=1)
+  Index Cond: (id = 1)
+  Index Searches: 1
+  Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=40
+Planning Time: 0.158 ms
+Execution Time: 0.012 ms
+
+-- Run 2
+Index Scan using users_pkey on users  (cost=0.29..8.30 rows=1 width=42) (actual time=0.010..0.010 rows=1.00 loops=1)
+  Index Cond: (id = 1)
+  Index Searches: 1
+  Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=40
+Planning Time: 0.183 ms
+Execution Time: 0.014 ms
+
+-- Run 3
+Index Scan using users_pkey on users  (cost=0.29..8.30 rows=1 width=42) (actual time=0.012..0.012 rows=1.00 loops=1)
+  Index Cond: (id = 1)
+  Index Searches: 1
+  Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=40
+Planning Time: 0.182 ms
+Execution Time: 0.016 ms
+

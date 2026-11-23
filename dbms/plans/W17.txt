@@ -1,0 +1,54 @@
+-- W17 | WRITE | Mark all my notifications as read
+-- Parameters: :uid
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- UPDATE notifications
+-- SET is_read = TRUE
+-- WHERE user_id = $1
+--   AND is_read = FALSE;
+-- 
+-- 
+
+-- Run 1
+Update on notifications  (cost=4.45..16.11 rows=0 width=0) (actual time=0.236..0.236 rows=0.00 loops=1)
+  Buffers: shared hit=49
+  ->  Bitmap Heap Scan on notifications  (cost=4.45..16.11 rows=3 width=7) (actual time=0.007..0.009 rows=3.00 loops=1)
+        Recheck Cond: ((user_id = 1) AND (NOT is_read))
+        Heap Blocks: exact=4
+        Buffers: shared hit=7
+        ->  Bitmap Index Scan on idx_notif_user_read  (cost=0.00..4.45 rows=3 width=0) (actual time=0.003..0.003 rows=6.00 loops=1)
+              Index Cond: ((user_id = 1) AND (is_read = false))
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning Time: 0.033 ms
+Execution Time: 0.327 ms
+
+-- Run 2
+Update on notifications  (cost=4.45..16.11 rows=0 width=0) (actual time=0.132..0.132 rows=0.00 loops=1)
+  Buffers: shared hit=49
+  ->  Bitmap Heap Scan on notifications  (cost=4.45..16.11 rows=3 width=7) (actual time=0.007..0.009 rows=3.00 loops=1)
+        Recheck Cond: ((user_id = 1) AND (NOT is_read))
+        Heap Blocks: exact=4
+        Buffers: shared hit=7
+        ->  Bitmap Index Scan on idx_notif_user_read  (cost=0.00..4.45 rows=3 width=0) (actual time=0.003..0.003 rows=6.00 loops=1)
+              Index Cond: ((user_id = 1) AND (is_read = false))
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning Time: 0.030 ms
+Execution Time: 0.199 ms
+
+-- Run 3
+Update on notifications  (cost=4.45..16.11 rows=0 width=0) (actual time=0.165..0.166 rows=0.00 loops=1)
+  Buffers: shared hit=49
+  ->  Bitmap Heap Scan on notifications  (cost=4.45..16.11 rows=3 width=7) (actual time=0.007..0.009 rows=3.00 loops=1)
+        Recheck Cond: ((user_id = 1) AND (NOT is_read))
+        Heap Blocks: exact=4
+        Buffers: shared hit=7
+        ->  Bitmap Index Scan on idx_notif_user_read  (cost=0.00..4.45 rows=3 width=0) (actual time=0.003..0.003 rows=6.00 loops=1)
+              Index Cond: ((user_id = 1) AND (is_read = false))
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning Time: 0.033 ms
+Execution Time: 0.248 ms
+

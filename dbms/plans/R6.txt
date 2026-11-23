@@ -1,0 +1,61 @@
+-- R6 | READ | Event details with creator
+-- Parameters: :ev
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT e.id, e.name, e.event_date, e.location, e.category, e.is_recurring,
+--        e.parent_event_id, e.created_by, u.name AS creator_name
+-- FROM events e
+-- JOIN users u ON u.id = e.created_by
+-- WHERE e.id = $1;
+-- 
+-- 
+
+-- Run 1
+Nested Loop  (cost=0.56..16.60 rows=1 width=56) (actual time=0.014..0.015 rows=1.00 loops=1)
+  Buffers: shared hit=6
+  ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=46) (actual time=0.004..0.004 rows=1.00 loops=1)
+        Index Cond: (id = 122)
+        Index Searches: 1
+        Buffers: shared hit=3
+  ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=14) (actual time=0.008..0.008 rows=1.00 loops=1)
+        Index Cond: (id = e.created_by)
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=58
+Planning Time: 0.333 ms
+Execution Time: 0.022 ms
+
+-- Run 2
+Nested Loop  (cost=0.56..16.60 rows=1 width=56) (actual time=0.012..0.013 rows=1.00 loops=1)
+  Buffers: shared hit=6
+  ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=46) (actual time=0.004..0.004 rows=1.00 loops=1)
+        Index Cond: (id = 122)
+        Index Searches: 1
+        Buffers: shared hit=3
+  ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=14) (actual time=0.007..0.007 rows=1.00 loops=1)
+        Index Cond: (id = e.created_by)
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=58
+Planning Time: 0.271 ms
+Execution Time: 0.020 ms
+
+-- Run 3
+Nested Loop  (cost=0.56..16.60 rows=1 width=56) (actual time=0.013..0.013 rows=1.00 loops=1)
+  Buffers: shared hit=6
+  ->  Index Scan using events_pkey on events e  (cost=0.28..8.29 rows=1 width=46) (actual time=0.003..0.003 rows=1.00 loops=1)
+        Index Cond: (id = 122)
+        Index Searches: 1
+        Buffers: shared hit=3
+  ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=14) (actual time=0.009..0.009 rows=1.00 loops=1)
+        Index Cond: (id = e.created_by)
+        Index Searches: 1
+        Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=58
+Planning Time: 0.287 ms
+Execution Time: 0.021 ms
+

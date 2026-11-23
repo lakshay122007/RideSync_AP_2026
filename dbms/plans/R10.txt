@@ -1,0 +1,80 @@
+-- R10 | READ | Approved riders of a ride
+-- Parameters: :pend_ride
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- SELECT u.id, u.name, u.avg_rating
+-- FROM ride_requests rq
+-- JOIN users u ON u.id = rq.rider_id
+-- WHERE rq.ride_id = $1
+--   AND rq.status = 'approved'
+-- ORDER BY rq.created_at;
+-- 
+-- 
+
+-- Run 1
+Sort  (cost=32.57..32.58 rows=2 width=27) (actual time=0.017..0.017 rows=1.00 loops=1)
+  Sort Key: rq.created_at
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=12
+  ->  Nested Loop  (cost=0.71..32.56 rows=2 width=27) (actual time=0.009..0.011 rows=1.00 loops=1)
+        Buffers: shared hit=9
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=2 width=12) (actual time=0.002..0.004 rows=1.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = 'approved'::text)
+              Rows Removed by Filter: 2
+              Index Searches: 1
+              Buffers: shared hit=6
+        ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.006..0.006 rows=1.00 loops=1)
+              Index Cond: (id = rq.rider_id)
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=55
+Planning Time: 0.338 ms
+Execution Time: 0.026 ms
+
+-- Run 2
+Sort  (cost=32.57..32.58 rows=2 width=27) (actual time=0.028..0.028 rows=1.00 loops=1)
+  Sort Key: rq.created_at
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=12
+  ->  Nested Loop  (cost=0.71..32.56 rows=2 width=27) (actual time=0.014..0.018 rows=1.00 loops=1)
+        Buffers: shared hit=9
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=2 width=12) (actual time=0.004..0.007 rows=1.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = 'approved'::text)
+              Rows Removed by Filter: 2
+              Index Searches: 1
+              Buffers: shared hit=6
+        ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.009..0.009 rows=1.00 loops=1)
+              Index Cond: (id = rq.rider_id)
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=55
+Planning Time: 0.361 ms
+Execution Time: 0.040 ms
+
+-- Run 3
+Sort  (cost=32.57..32.58 rows=2 width=27) (actual time=0.019..0.019 rows=1.00 loops=1)
+  Sort Key: rq.created_at
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=12
+  ->  Nested Loop  (cost=0.71..32.56 rows=2 width=27) (actual time=0.011..0.013 rows=1.00 loops=1)
+        Buffers: shared hit=9
+        ->  Index Scan using ride_requests_ride_id_rider_id_key on ride_requests rq  (cost=0.42..15.95 rows=2 width=12) (actual time=0.002..0.005 rows=1.00 loops=1)
+              Index Cond: (ride_id = 10)
+              Filter: ((status)::text = 'approved'::text)
+              Rows Removed by Filter: 2
+              Index Searches: 1
+              Buffers: shared hit=6
+        ->  Index Scan using users_pkey on users u  (cost=0.29..8.30 rows=1 width=19) (actual time=0.007..0.007 rows=1.00 loops=1)
+              Index Cond: (id = rq.rider_id)
+              Index Searches: 1
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=55
+Planning Time: 0.298 ms
+Execution Time: 0.028 ms
+

@@ -1,0 +1,47 @@
+-- W18 | WRITE | Rate a driver or rider after a completed ride
+-- Parameters: :done_ride, :done_rider, :done_driver, 5, 'Great ride'
+-- Parameter values used: uid=1 rated=171 rider=1 ev=122 ev_busy=1 pend_req=60010 pend_ride=10 appr_req=10 done_ride=1 w9_ride=10 notif=60000
+-- Every run is rolled back, so the data is the same for each run.
+
+-- INSERT INTO ratings (ride_id, rater_id, rated_id, stars, comment)
+-- VALUES ($1, $2, $3, $4, $5)
+-- RETURNING id;
+-- 
+-- 
+
+-- Run 1
+Insert on ratings  (cost=0.00..0.01 rows=1 width=52) (actual time=0.137..0.138 rows=1.00 loops=1)
+  Buffers: shared hit=29
+  ->  Result  (cost=0.00..0.01 rows=1 width=52) (actual time=0.031..0.032 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.021 ms
+Trigger for constraint ratings_ride_id_fkey: time=0.110 calls=1
+Trigger for constraint ratings_rater_id_fkey: time=0.333 calls=1
+Trigger for constraint ratings_rated_id_fkey: time=0.060 calls=1
+Trigger ratings_refresh_avg: time=1.564 calls=1
+Execution Time: 2.214 ms
+
+-- Run 2
+Insert on ratings  (cost=0.00..0.01 rows=1 width=52) (actual time=0.123..0.123 rows=1.00 loops=1)
+  Buffers: shared hit=28
+  ->  Result  (cost=0.00..0.01 rows=1 width=52) (actual time=0.030..0.030 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.020 ms
+Trigger for constraint ratings_ride_id_fkey: time=0.107 calls=1
+Trigger for constraint ratings_rater_id_fkey: time=0.230 calls=1
+Trigger for constraint ratings_rated_id_fkey: time=0.031 calls=1
+Trigger ratings_refresh_avg: time=1.478 calls=1
+Execution Time: 1.978 ms
+
+-- Run 3
+Insert on ratings  (cost=0.00..0.01 rows=1 width=52) (actual time=0.164..0.165 rows=1.00 loops=1)
+  Buffers: shared hit=28
+  ->  Result  (cost=0.00..0.01 rows=1 width=52) (actual time=0.043..0.043 rows=1.00 loops=1)
+        Buffers: shared hit=12
+Planning Time: 0.087 ms
+Trigger for constraint ratings_ride_id_fkey: time=0.127 calls=1
+Trigger for constraint ratings_rater_id_fkey: time=0.258 calls=1
+Trigger for constraint ratings_rated_id_fkey: time=0.035 calls=1
+Trigger ratings_refresh_avg: time=1.415 calls=1
+Execution Time: 2.011 ms
+
